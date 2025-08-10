@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ScrollToTop from './components/common/ScrollToTop';
+import { CACHE_BUSTER } from './cache-buster'; // Force rebuild
 import HomePage from './pages/HomePage';
 import BrowsePage from './pages/BrowsePage';
 import ReportPage from './pages/ReportPage';
@@ -13,9 +14,9 @@ import AdminDashboard from './components/admin/AdminDashboard';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './styles/globals.css';
-import './test-api'; // TEMPORARY TEST - CACHE BUST
 
 function App() {
+  console.log('🔥 CACHE BUSTER ACTIVE:', CACHE_BUSTER);
   return (
     <AuthProvider>
       <Router>
