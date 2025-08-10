@@ -1,3 +1,4 @@
+const jwt = require('jsonwebtoken');
 const { supabase } = require('./lib/supabase');
 
 // Helper function to parse request body
@@ -44,6 +45,22 @@ async function parseBody(req) {
   });
 }
 
+// Helper function to verify JWT token
+function verifyToken(req) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return null;
+  }
+
+  const token = authHeader.substring(7);
+  try {
+    return jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret');
+  } catch (error) {
+    console.error('Token verification error:', error);
+    return null;
+  }
+}
+
 module.exports = async function handler(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);
@@ -84,12 +101,19 @@ module.exports = async function handler(req, res) {
     }
 
     else if (req.method === 'POST') {
+      // Verify authentication for creating items
+      const user = verifyToken(req);
+      if (!user) {
+        return res.status(401).json({ message: 'Unauthorized - Please log in to create items' });
+      }
+
       // Parse request body manually
       const body = await parseBody(req);
       
       console.log('POST request received');
       console.log('Content-Type:', req.headers['content-type']);
       console.log('Parsed body:', body);
+      console.log('Authenticated user:', user.id);
       
       // Extract fields from parsed body
       const { title, description, category, location, type, contactInfo, dateTime, reward } = body;
@@ -131,10 +155,10 @@ module.exports = async function handler(req, res) {
       const locationString = parsedLocation?.building || location || 'Unknown';
 
       console.log('Creating item with data:', {
-        title, description, category, location: locationString, type
+        title, description, category, location: locationString, type, userId: user.id
       });
 
-      // Create the item in database
+      // Create the item in database with userId
       const { data, error } = await supabase
         .from('Items')
         .insert([{
@@ -144,7 +168,8 @@ module.exports = async function handler(req, res) {
           location: locationString,
           type,
           images: [],
-          status: 'open'
+          status: 'open',
+          userId: user.id
         }])
         .select()
         .single();
