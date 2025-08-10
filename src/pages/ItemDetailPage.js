@@ -25,18 +25,27 @@ const ItemDetailPage = () => {
       console.log('Item detail response:', response);
       
       // Handle different response structures
-      if (response && response.data && response.data.item) {
-        setItem(response.data.item);
-      } else if (response && response.data) {
-        setItem(response.data);
-      } else if (response) {
-        setItem(response);
+      if (response && response.success !== false) {
+        if (response.data && response.data.item) {
+          setItem(response.data.item);
+        } else if (response.data) {
+          setItem(response.data);
+        } else if (response) {
+          setItem(response);
+        } else {
+          throw new Error('No item data received');
+        }
       } else {
-        throw new Error('No item data received');
+        // Handle API error response
+        throw new Error(response.message || 'Item not found');
       }
     } catch (err) {
       console.error('Error fetching item:', err);
-      setError('Failed to load item details. Please try again.');
+      if (err.message.includes('404') || err.message.includes('not found')) {
+        setError(`Item with ID ${id} was not found. It may have been removed or claimed.`);
+      } else {
+        setError('Failed to load item details. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -65,13 +74,23 @@ const ItemDetailPage = () => {
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">Item Not Found</h1>
             <p className="text-gray-600 mb-8">{error || 'The item you are looking for does not exist.'}</p>
-            <button
-              onClick={() => navigate('/browse')}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors flex items-center mx-auto"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Browse
-            </button>
+            <div className="space-y-4">
+              <button
+                onClick={() => navigate('/browse')}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors flex items-center mx-auto"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Browse
+              </button>
+              <div className="text-gray-500">or</div>
+              <button
+                onClick={() => navigate('/report')}
+                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-colors flex items-center mx-auto"
+              >
+                <Eye className="w-4 h-4 mr-2" />
+                Report a Lost/Found Item
+              </button>
+            </div>
           </div>
         </div>
         <Footer />

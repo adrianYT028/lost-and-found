@@ -198,179 +198,198 @@ const makeRequest = async (endpoint, options = {}) => {
   }
 };
 
+// Safety wrapper for all API calls
+const safeApiCall = async (apiFunction, ...args) => {
+  try {
+    const result = await apiFunction(...args);
+    // Ensure result is never undefined/null
+    if (result === undefined || result === null) {
+      return { data: null, error: 'No data received' };
+    }
+    return result;
+  } catch (error) {
+    console.error('Safe API call failed:', error);
+    return { 
+      data: null, 
+      error: error.message || 'Request failed',
+      status: error.status || 500
+    };
+  }
+};
+
 // API Service functions
 export const apiService = {
   // Authentication services
   auth: {
-    login: (credentials) => makeRequest(API_ENDPOINTS.LOGIN, {
+    login: (credentials) => safeApiCall(() => makeRequest(API_ENDPOINTS.LOGIN, {
       method: httpMethods.POST,
       body: credentials
-    }),
+    })),
     
-    register: (userData) => makeRequest(API_ENDPOINTS.REGISTER, {
+    register: (userData) => safeApiCall(() => makeRequest(API_ENDPOINTS.REGISTER, {
       method: httpMethods.POST,
       body: userData
-    }),
+    })),
     
-    refreshToken: () => makeRequest(API_ENDPOINTS.REFRESH_TOKEN, {
+    refreshToken: () => safeApiCall(() => makeRequest(API_ENDPOINTS.REFRESH_TOKEN, {
       method: httpMethods.POST
-    }),
+    })),
     
-    forgotPassword: (email) => makeRequest(API_ENDPOINTS.FORGOT_PASSWORD, {
+    forgotPassword: (email) => safeApiCall(() => makeRequest(API_ENDPOINTS.FORGOT_PASSWORD, {
       method: httpMethods.POST,
       body: { email }
-    }),
+    })),
     
-    resetPassword: (token, password) => makeRequest(API_ENDPOINTS.RESET_PASSWORD, {
+    resetPassword: (token, password) => safeApiCall(() => makeRequest(API_ENDPOINTS.RESET_PASSWORD, {
       method: httpMethods.POST,
       body: { token, password }
-    }),
+    })),
     
-    verifyEmail: (token) => makeRequest(API_ENDPOINTS.VERIFY_EMAIL, {
+    verifyEmail: (token) => safeApiCall(() => makeRequest(API_ENDPOINTS.VERIFY_EMAIL, {
       method: httpMethods.POST,
       body: { token }
-    })
+    }))
   },
 
   // Items services
   items: {
-    getAll: (params = {}) => {
+    getAll: (params = {}) => safeApiCall(() => {
       const searchParams = new URLSearchParams(params);
       return makeRequest(`${API_ENDPOINTS.ITEMS}?${searchParams}`);
-    },
-    
-    getById: (id) => makeRequest(API_ENDPOINTS.ITEM_BY_ID(id)),
-    
-    create: (itemData) => makeRequest(API_ENDPOINTS.ITEMS, {
-      method: httpMethods.POST,
-      body: itemData
     }),
     
-    update: (id, itemData) => makeRequest(API_ENDPOINTS.ITEM_BY_ID(id), {
+    getById: (id) => safeApiCall(() => makeRequest(API_ENDPOINTS.ITEM_BY_ID(id))),
+    
+    create: (itemData) => safeApiCall(() => makeRequest(API_ENDPOINTS.ITEMS, {
+      method: httpMethods.POST,
+      body: itemData
+    })),
+    
+    update: (id, itemData) => safeApiCall(() => makeRequest(API_ENDPOINTS.ITEM_BY_ID(id), {
       method: httpMethods.PUT,
       body: itemData
-    }),
+    })),
     
-    delete: (id) => makeRequest(API_ENDPOINTS.ITEM_BY_ID(id), {
+    delete: (id) => safeApiCall(() => makeRequest(API_ENDPOINTS.ITEM_BY_ID(id), {
       method: httpMethods.DELETE
-    }),
+    })),
     
-    search: (searchParams) => makeRequest(API_ENDPOINTS.SEARCH_ITEMS, {
+    search: (searchParams) => safeApiCall(() => makeRequest(API_ENDPOINTS.SEARCH_ITEMS, {
       method: httpMethods.POST,
       body: searchParams
-    }),
+    })),
     
-    getMyItems: () => makeRequest(API_ENDPOINTS.MY_ITEMS),
+    getMyItems: () => safeApiCall(() => makeRequest(API_ENDPOINTS.MY_ITEMS)),
     
-    getInquiries: (id) => makeRequest(API_ENDPOINTS.ITEM_INQUIRIES(id)),
+    getInquiries: (id) => safeApiCall(() => makeRequest(API_ENDPOINTS.ITEM_INQUIRIES(id))),
     
-    createInquiry: (id, inquiryData) => makeRequest(API_ENDPOINTS.ITEM_INQUIRIES(id), {
+    createInquiry: (id, inquiryData) => safeApiCall(() => makeRequest(API_ENDPOINTS.ITEM_INQUIRIES(id), {
       method: httpMethods.POST,
       body: inquiryData
-    })
+    }))
   },
 
   // Users services
   users: {
-    getProfile: () => makeRequest(API_ENDPOINTS.PROFILE),
+    getProfile: () => safeApiCall(() => makeRequest(API_ENDPOINTS.PROFILE)),
     
-    updateProfile: (profileData) => makeRequest(API_ENDPOINTS.UPDATE_PROFILE, {
+    updateProfile: (profileData) => safeApiCall(() => makeRequest(API_ENDPOINTS.UPDATE_PROFILE, {
       method: httpMethods.PUT,
       body: profileData
-    }),
+    })),
     
-    uploadAvatar: (formData) => makeRequest(API_ENDPOINTS.UPLOAD_AVATAR, {
+    uploadAvatar: (formData) => safeApiCall(() => makeRequest(API_ENDPOINTS.UPLOAD_AVATAR, {
       method: httpMethods.POST,
       body: formData
-    }),
+    })),
     
-    getStats: () => makeRequest(API_ENDPOINTS.USER_STATS)
+    getStats: () => safeApiCall(() => makeRequest(API_ENDPOINTS.USER_STATS))
   },
 
   // Matches services
   matches: {
-    getAll: () => makeRequest(API_ENDPOINTS.MATCHES),
+    getAll: () => safeApiCall(() => makeRequest(API_ENDPOINTS.MATCHES)),
     
-    getById: (id) => makeRequest(API_ENDPOINTS.MATCH_BY_ID(id)),
+    getById: (id) => safeApiCall(() => makeRequest(API_ENDPOINTS.MATCH_BY_ID(id))),
     
-    confirm: (id) => makeRequest(API_ENDPOINTS.CONFIRM_MATCH(id), {
+    confirm: (id) => safeApiCall(() => makeRequest(API_ENDPOINTS.CONFIRM_MATCH(id), {
       method: httpMethods.POST
-    }),
+    })),
     
-    reject: (id) => makeRequest(API_ENDPOINTS.REJECT_MATCH(id), {
+    reject: (id) => safeApiCall(() => makeRequest(API_ENDPOINTS.REJECT_MATCH(id), {
       method: httpMethods.POST
-    }),
+    })),
 
     // AI Matching services
-    getSuggestions: (itemId, threshold = 60) => makeRequest(`/ai-matches/suggestions/${itemId}?threshold=${threshold}`),
+    getSuggestions: (itemId, threshold = 60) => safeApiCall(() => makeRequest(`/ai-matches/suggestions/${itemId}?threshold=${threshold}`)),
     
-    autoMatch: (itemId) => makeRequest(`/ai-matches/auto-match/${itemId}`, {
+    autoMatch: (itemId) => safeApiCall(() => makeRequest(`/ai-matches/auto-match/${itemId}`, {
       method: httpMethods.POST
-    }),
+    })),
     
-    calculateSimilarity: (item1Id, item2Id) => makeRequest('/ai-matches/similarity', {
+    calculateSimilarity: (item1Id, item2Id) => safeApiCall(() => makeRequest('/ai-matches/similarity', {
       method: httpMethods.POST,
       body: { item1Id, item2Id }
-    }),
+    })),
 
-    getPending: () => makeRequest('/ai-matches/pending')
+    getPending: () => safeApiCall(() => makeRequest('/ai-matches/pending'))
   },
 
   // Admin services
   admin: {
-    getDashboardStats: () => makeRequest(API_ENDPOINTS.ADMIN_DASHBOARD_STATS),
+    getDashboardStats: () => safeApiCall(() => makeRequest(API_ENDPOINTS.ADMIN_DASHBOARD_STATS)),
     
-    getItems: () => makeRequest(API_ENDPOINTS.ADMIN_ITEMS),
+    getItems: () => safeApiCall(() => makeRequest(API_ENDPOINTS.ADMIN_ITEMS)),
     
-    getUsers: () => makeRequest(API_ENDPOINTS.ADMIN_USERS),
+    getUsers: () => safeApiCall(() => makeRequest(API_ENDPOINTS.ADMIN_USERS)),
     
-    updateItemStatus: (itemId, status, adminNote = '') => makeRequest(API_ENDPOINTS.ADMIN_ITEM_STATUS(itemId), {
+    updateItemStatus: (itemId, status, adminNote = '') => safeApiCall(() => makeRequest(API_ENDPOINTS.ADMIN_ITEM_STATUS(itemId), {
       method: httpMethods.PUT,
       body: { status, adminNote }
-    }),
+    })),
     
-    markAsClaimed: (itemId, collectionLocation, collectionInstructions = '') => makeRequest(API_ENDPOINTS.ADMIN_ITEM_READY_FOR_COLLECTION(itemId), {
+    markAsClaimed: (itemId, collectionLocation, collectionInstructions = '') => safeApiCall(() => makeRequest(API_ENDPOINTS.ADMIN_ITEM_READY_FOR_COLLECTION(itemId), {
       method: httpMethods.PUT,
       body: { collectionLocation, collectionInstructions }
-    }),
+    })),
     
-    updateUserRole: (userId, role) => makeRequest(API_ENDPOINTS.ADMIN_USER_ROLE(userId), {
+    updateUserRole: (userId, role) => safeApiCall(() => makeRequest(API_ENDPOINTS.ADMIN_USER_ROLE(userId), {
       method: httpMethods.PUT,
       body: { role }
-    }),
+    })),
 
     // Enhanced admin powers
-    deleteItem: (itemId) => makeRequest(API_ENDPOINTS.ADMIN_DELETE_ITEM(itemId), {
+    deleteItem: (itemId) => safeApiCall(() => makeRequest(API_ENDPOINTS.ADMIN_DELETE_ITEM(itemId), {
       method: httpMethods.DELETE
-    }),
+    })),
 
-    editItem: (itemId, itemData) => makeRequest(API_ENDPOINTS.ADMIN_EDIT_ITEM(itemId), {
+    editItem: (itemId, itemData) => safeApiCall(() => makeRequest(API_ENDPOINTS.ADMIN_EDIT_ITEM(itemId), {
       method: httpMethods.PUT,
       body: itemData
-    }),
+    })),
 
-    deleteUser: (userId) => makeRequest(API_ENDPOINTS.ADMIN_DELETE_USER(userId), {
+    deleteUser: (userId) => safeApiCall(() => makeRequest(API_ENDPOINTS.ADMIN_DELETE_USER(userId), {
       method: httpMethods.DELETE
-    }),
+    })),
 
-    resetUserPassword: (userId, newPassword) => makeRequest(API_ENDPOINTS.ADMIN_RESET_PASSWORD(userId), {
+    resetUserPassword: (userId, newPassword) => safeApiCall(() => makeRequest(API_ENDPOINTS.ADMIN_RESET_PASSWORD(userId), {
       method: httpMethods.PUT,
       body: { newPassword }
-    }),
+    })),
 
-    activateUser: (userId, isActive) => makeRequest(API_ENDPOINTS.ADMIN_ACTIVATE_USER(userId), {
+    activateUser: (userId, isActive) => safeApiCall(() => makeRequest(API_ENDPOINTS.ADMIN_ACTIVATE_USER(userId), {
       method: httpMethods.PUT,
       body: { isActive }
-    }),
+    })),
 
-    bulkAction: (itemIds, action, actionData = {}) => makeRequest(API_ENDPOINTS.ADMIN_BULK_ACTION, {
+    bulkAction: (itemIds, action, actionData = {}) => safeApiCall(() => makeRequest(API_ENDPOINTS.ADMIN_BULK_ACTION, {
       method: httpMethods.POST,
       body: { itemIds, action, actionData }
-    }),
+    })),
 
-    getAnalytics: (timeRange = '30') => makeRequest(`${API_ENDPOINTS.ADMIN_ANALYTICS}?timeRange=${timeRange}`),
+    getAnalytics: (timeRange = '30') => safeApiCall(() => makeRequest(`${API_ENDPOINTS.ADMIN_ANALYTICS}?timeRange=${timeRange}`)),
 
-    exportData: (type = 'items') => makeRequest(`${API_ENDPOINTS.ADMIN_EXPORT}?type=${type}`)
+    exportData: (type = 'items') => safeApiCall(() => makeRequest(`${API_ENDPOINTS.ADMIN_EXPORT}?type=${type}`))
   }
 };
 

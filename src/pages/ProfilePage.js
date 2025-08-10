@@ -20,14 +20,21 @@ const ProfilePage = () => {
       try {
         setLoading(true);
         const response = await apiService.users.getProfile();
-        if (response.success) {
+        console.log('Profile response:', response);
+        
+        // Handle different response structures safely
+        if (response && response.success && response.data) {
           setProfile(response.data);
+        } else if (response && response.data) {
+          setProfile(response.data);
+        } else if (response) {
+          setProfile(response);
         } else {
-          setError(response.message);
+          setError('No profile data received');
         }
       } catch (err) {
         setError('Failed to fetch profile data.');
-        console.error(err);
+        console.error('Profile fetch error:', err);
       } finally {
         setLoading(false);
       }

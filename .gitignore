@@ -121,3 +121,4 @@ backend/dist/
 # Uploads directory (contains user uploaded images)
 backend/uploads/
 uploads/
+.vercel
