@@ -2,6 +2,32 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { supabase } = require('../lib/supabase');
 
+// Helper function to parse request body
+async function parseBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    
+    req.on('data', chunk => {
+      body += chunk.toString();
+    });
+    
+    req.on('end', () => {
+      try {
+        if (req.headers['content-type']?.includes('application/json')) {
+          resolve(JSON.parse(body));
+        } else {
+          resolve(JSON.parse(body));
+        }
+      } catch (error) {
+        console.error('Body parsing error:', error);
+        resolve({});
+      }
+    });
+    
+    req.on('error', reject);
+  });
+}
+
 module.exports = async function handler(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);
@@ -19,7 +45,11 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const { email, password } = req.body;
+    // Parse request body manually
+    const body = await parseBody(req);
+    console.log('Login request body:', body);
+    
+    const { email, password } = body;
 
     if (!email || !password) {
       return res.status(400).json({ message: 'Email and password are required' });
@@ -53,9 +83,11 @@ module.exports = async function handler(req, res) {
     const { password: _, ...userWithoutPassword } = users;
 
     res.status(200).json({
-      user: userWithoutPassword,
-      token,
-      emailVerificationRequired: false
+      data: {
+        user: userWithoutPassword,
+        token,
+        emailVerificationRequired: false
+      }
     });
 
   } catch (error) {

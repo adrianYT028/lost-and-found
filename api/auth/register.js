@@ -1,5 +1,32 @@
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const { supabase } = require('../lib/supabase');
+
+// Helper function to parse request body
+async function parseBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    
+    req.on('data', chunk => {
+      body += chunk.toString();
+    });
+    
+    req.on('end', () => {
+      try {
+        if (req.headers['content-type']?.includes('application/json')) {
+          resolve(JSON.parse(body));
+        } else {
+          resolve(JSON.parse(body));
+        }
+      } catch (error) {
+        console.error('Body parsing error:', error);
+        resolve({});
+      }
+    });
+    
+    req.on('error', reject);
+  });
+}
 
 module.exports = async function handler(req, res) {
   // Set CORS headers
@@ -18,7 +45,11 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const { firstName, lastName, email, password, studentId, course, year, phoneNumber } = req.body;
+    // Parse request body manually
+    const body = await parseBody(req);
+    console.log('Register request body:', body);
+    
+    const { firstName, lastName, email, password, studentId, course, year, phoneNumber } = body;
 
     if (!firstName || !lastName || !email || !password) {
       return res.status(400).json({ message: 'Required fields are missing' });
@@ -65,9 +96,19 @@ module.exports = async function handler(req, res) {
     // Remove password from response
     const { password: _, ...userWithoutPassword } = data;
 
+    // Generate JWT token for auto-login after registration
+    const token = jwt.sign(
+      { id: data.id, email: data.email, role: data.role },
+      process.env.JWT_SECRET || 'fallback-secret',
+      { expiresIn: '7d' }
+    );
+
     res.status(201).json({
-      message: 'User registered successfully',
-      user: userWithoutPassword
+      data: {
+        message: 'User registered successfully',
+        user: userWithoutPassword,
+        token
+      }
     });
 
   } catch (error) {
