@@ -41,7 +41,15 @@ module.exports = async function handler(req, res) {
 
     else if (req.method === 'POST') {
       // Create new item
+      console.log('POST request received');
+      console.log('Request body:', req.body);
+      console.log('Request headers:', req.headers);
+      
       const { title, description, category, location, type, contactInfo, dateTime, reward } = req.body;
+      
+      console.log('Extracted fields:', {
+        title, description, category, location, type, contactInfo, dateTime, reward
+      });
       
       // Parse JSON strings if they exist (from FormData)
       let parsedLocation = location;
