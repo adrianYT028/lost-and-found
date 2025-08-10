@@ -5,7 +5,7 @@ console.log('Testing API configuration...');
 
 // Test API endpoints
 console.log('API_ENDPOINTS.ITEMS:', '/api/items');
-console.log('API_BASE_URL + endpoint should give:', 'http://localhost:5002/api/items');
+console.log('Current environment API URL:', process.env.REACT_APP_API_URL);
 
 // Test the makeRequest function
 (async () => {
