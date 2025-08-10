@@ -23,6 +23,11 @@
       ]
     }
   ],
-  "buildCommand": "cd frontend && npm install && npm run build",
+  "build": {
+    "env": {
+      "CI": "false"
+    }
+  },
+  "buildCommand": "cd frontend && npm install && CI=false npm run build",
   "outputDirectory": "frontend/build"
 }

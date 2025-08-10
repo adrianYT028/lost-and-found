@@ -1,0 +1,9 @@
+backend/
+node_modules/
+.git/
+.env
+.env.local
+.env.backup
+*.log
+.DS_Store
+.vscode/
