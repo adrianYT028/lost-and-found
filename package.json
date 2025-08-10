@@ -1,6 +1,6 @@
 {
-  "name": "lost-and-found-app",
-  "version": "1.0.1",
+  "name": "lost-found-v2",
+  "version": "2.0.0",
   "private": true,
   "scripts": {
     "dev": "vercel dev",
