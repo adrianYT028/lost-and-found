@@ -26,13 +26,13 @@ const BrowsePage = () => {
       const response = await apiService.items.getAll();
       console.log('API Response:', response);
       
-      // Handle the correct response structure: response.data.items
-      const itemsArray = response?.data?.items || response?.items || [];
-      const validItems = Array.isArray(itemsArray) ? itemsArray : [];
-      setItems(validItems);
+      // The API returns items directly as an array
+      const itemsArray = Array.isArray(response) ? response : [];
+      console.log('Items array:', itemsArray);
+      setItems(itemsArray);
       
       // Debug: Log categories in the items
-      const categoriesInItems = [...new Set(validItems.map(item => item.category).filter(Boolean))];
+      const categoriesInItems = [...new Set(itemsArray.map(item => item.category).filter(Boolean))];
       console.log('Categories found in items:', categoriesInItems);
     } catch (err) {
       console.error('Error fetching items:', err);
