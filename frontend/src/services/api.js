@@ -1,10 +1,14 @@
 // API Configuration and Service Layer - SUPABASE + VERCEL v4.0 - 2025-08-10
-const API_BASE_URL = process.env.REACT_APP_API_URL || 
-  (window.location.hostname === 'localhost' 
-    ? 'http://localhost:3001/api'
-    : 'https://college-lost-and-found.vercel.app/api');
+// Force production URL to avoid localhost cache issues
+const API_BASE_URL = window.location.hostname.includes('vercel.app') 
+  ? 'https://college-lost-and-found.vercel.app/api'
+  : (process.env.REACT_APP_API_URL || 'http://localhost:3001/api');
 
-console.log('🔧 API_BASE_URL:', API_BASE_URL, 'Environment:', process.env.NODE_ENV);
+console.log('🔧 API_BASE_URL:', API_BASE_URL, 'Hostname:', window.location.hostname);
+console.log('🔧 Environment Variables:', {
+  REACT_APP_API_URL: process.env.REACT_APP_API_URL,
+  NODE_ENV: process.env.NODE_ENV
+});
 
 // API Endpoints
 export const API_ENDPOINTS = {
@@ -64,7 +68,7 @@ const httpMethods = {
 // Request helper function
 const makeRequest = async (endpoint, options = {}) => {
   const url = `${API_BASE_URL}${endpoint}`;
-  console.log('🔥 API REQUEST URL v3.0:', url, 'Time:', new Date().toISOString()); // Cache busting debug
+  console.log('🔥 API REQUEST URL v4.0:', url, 'Time:', new Date().toISOString()); // Version bump for cache busting
   
   // Get token from localStorage
   const token = localStorage.getItem('token');
