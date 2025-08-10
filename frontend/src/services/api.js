@@ -21,7 +21,7 @@ export const API_ENDPOINTS = {
   ITEMS: '/items',
   ITEM_BY_ID: (id) => `/items/${id}`,
   SEARCH_ITEMS: '/items/search',
-  MY_ITEMS: '/items/my-items',
+  MY_ITEMS: '/items/my',
   ITEM_INQUIRIES: (id) => `/items/${id}/inquiries`,
   
   // Users
@@ -194,7 +194,7 @@ export const apiService = {
       body: searchParams
     }),
     
-    getMyItems: () => makeRequest(`${API_ENDPOINTS.ITEMS}/my`),
+    getMyItems: () => makeRequest(API_ENDPOINTS.MY_ITEMS),
     
     getInquiries: (id) => makeRequest(API_ENDPOINTS.ITEM_INQUIRIES(id)),
     
