@@ -3,7 +3,7 @@
   "name": "lost-found-v2",
   "functions": {
     "api/**/*.js": {
-      "runtime": "@vercel/node@18.20.4"
+      "runtime": "nodejs18.x"
     }
   },
   "rewrites": [
