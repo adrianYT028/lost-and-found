@@ -1,3 +1,10 @@
+-- Create enum for item status (only if it doesn't exist)
+DO $$ BEGIN
+    CREATE TYPE enum_Items_status AS ENUM ('open', 'claimed', 'closed', 'active', 'matched');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
 -- Create Users table
 CREATE TABLE IF NOT EXISTS "Users" (
     id SERIAL PRIMARY KEY,
@@ -19,9 +26,6 @@ CREATE TABLE IF NOT EXISTS "Users" (
     "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
--- Create enum for item status
-CREATE TYPE enum_Items_status AS ENUM ('open', 'claimed', 'closed', 'active', 'matched');
 
 -- Create Items table
 CREATE TABLE IF NOT EXISTS "Items" (
@@ -71,6 +75,17 @@ INSERT INTO "Users" (
 -- Enable Row Level Security (optional but recommended)
 ALTER TABLE "Users" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Items" ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Enable read access for all users" ON "Users";
+DROP POLICY IF EXISTS "Enable insert access for all users" ON "Users";
+DROP POLICY IF EXISTS "Enable update access for all users" ON "Users";
+DROP POLICY IF EXISTS "Enable delete access for all users" ON "Users";
+
+DROP POLICY IF EXISTS "Enable read access for all users" ON "Items";
+DROP POLICY IF EXISTS "Enable insert access for all users" ON "Items";
+DROP POLICY IF EXISTS "Enable update access for all users" ON "Items";
+DROP POLICY IF EXISTS "Enable delete access for all users" ON "Items";
 
 -- Create policies for public access (since you're handling auth yourself)
 CREATE POLICY "Enable read access for all users" ON "Users" FOR SELECT USING (true);

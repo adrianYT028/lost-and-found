@@ -41,22 +41,48 @@ module.exports = async function handler(req, res) {
 
     else if (req.method === 'POST') {
       // Create new item
-      const { title, description, category, location, type, images } = req.body;
-
-      if (!title || !description || !type) {
-        return res.status(400).json({ message: 'Required fields are missing' });
+      const { title, description, category, location, type, contactInfo, dateTime, reward } = req.body;
+      
+      // Parse JSON strings if they exist (from FormData)
+      let parsedLocation = location;
+      let parsedContactInfo = contactInfo;
+      
+      try {
+        if (typeof location === 'string') {
+          parsedLocation = JSON.parse(location);
+        }
+        if (typeof contactInfo === 'string') {
+          parsedContactInfo = JSON.parse(contactInfo);
+        }
+      } catch (e) {
+        console.log('No JSON parsing needed for location/contactInfo');
       }
 
-      // For now, create without userId (you'll need to implement auth middleware)
+      // Validate required fields
+      if (!title || !description || !type) {
+        return res.status(400).json({ 
+          message: 'Required fields are missing: title, description, type',
+          received: { title: !!title, description: !!description, type: !!type }
+        });
+      }
+
+      // Extract location string from object or use as-is
+      const locationString = parsedLocation?.building || location || 'Unknown';
+
+      console.log('Creating item with data:', {
+        title, description, category, location: locationString, type
+      });
+
+      // Create the item in database
       const { data, error } = await supabase
         .from('Items')
         .insert([{
           title,
           description,
           category,
-          location,
+          location: locationString,
           type,
-          images: images || [],
+          images: [],
           status: 'open'
         }])
         .select()
@@ -64,9 +90,14 @@ module.exports = async function handler(req, res) {
 
       if (error) {
         console.error('Error creating item:', error);
-        return res.status(500).json({ message: 'Failed to create item' });
+        return res.status(500).json({ 
+          message: 'Failed to create item', 
+          error: error.message,
+          details: error.details || error.hint
+        });
       }
 
+      console.log('Item created successfully:', data);
       res.status(201).json(data);
     }
 
