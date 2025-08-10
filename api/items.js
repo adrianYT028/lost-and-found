@@ -1,5 +1,49 @@
 const { supabase } = require('./lib/supabase');
 
+// Helper function to parse request body
+async function parseBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    
+    req.on('data', chunk => {
+      body += chunk.toString();
+    });
+    
+    req.on('end', () => {
+      try {
+        // Try to parse as JSON first
+        if (req.headers['content-type']?.includes('application/json')) {
+          resolve(JSON.parse(body));
+        } 
+        // Handle FormData
+        else if (req.headers['content-type']?.includes('multipart/form-data')) {
+          // For FormData, we'll need to parse it manually or use a library
+          // For now, let's expect JSON from the frontend
+          resolve({});
+        }
+        // Handle URL-encoded data
+        else if (req.headers['content-type']?.includes('application/x-www-form-urlencoded')) {
+          const parsed = {};
+          body.split('&').forEach(pair => {
+            const [key, value] = pair.split('=');
+            parsed[decodeURIComponent(key)] = decodeURIComponent(value);
+          });
+          resolve(parsed);
+        }
+        else {
+          // Try JSON parsing as fallback
+          resolve(JSON.parse(body));
+        }
+      } catch (error) {
+        console.error('Body parsing error:', error);
+        resolve({});
+      }
+    });
+    
+    req.on('error', reject);
+  });
+}
+
 module.exports = async function handler(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);
@@ -40,14 +84,15 @@ module.exports = async function handler(req, res) {
     }
 
     else if (req.method === 'POST') {
-      // Create new item
+      // Parse request body manually
+      const body = await parseBody(req);
+      
       console.log('POST request received');
       console.log('Content-Type:', req.headers['content-type']);
-      console.log('Request body type:', typeof req.body);
-      console.log('Request body:', req.body);
+      console.log('Parsed body:', body);
       
-      // Extract fields from request body
-      const { title, description, category, location, type, contactInfo, dateTime, reward } = req.body;
+      // Extract fields from parsed body
+      const { title, description, category, location, type, contactInfo, dateTime, reward } = body;
       
       console.log('Extracted fields:', {
         title, description, category, location, type, contactInfo, dateTime, reward
@@ -77,7 +122,7 @@ module.exports = async function handler(req, res) {
             title: !!title, 
             description: !!description, 
             type: !!type,
-            allFields: Object.keys(req.body)
+            allFields: Object.keys(body || {})
           }
         });
       }
