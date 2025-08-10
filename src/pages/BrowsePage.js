@@ -26,8 +26,19 @@ const BrowsePage = () => {
       const response = await apiService.items.getAll();
       console.log('API Response:', response);
       
-      // The API returns items directly as an array
-      const itemsArray = Array.isArray(response) ? response : [];
+      // Handle different response structures safely
+      let itemsArray = [];
+      if (Array.isArray(response)) {
+        itemsArray = response;
+      } else if (response && Array.isArray(response.data)) {
+        itemsArray = response.data;
+      } else if (response && response.data && Array.isArray(response.data.items)) {
+        itemsArray = response.data.items;
+      } else {
+        console.warn('Unexpected response structure:', response);
+        itemsArray = [];
+      }
+      
       console.log('Items array:', itemsArray);
       setItems(itemsArray);
       

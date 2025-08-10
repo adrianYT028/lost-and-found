@@ -109,14 +109,29 @@ const makeRequest = async (endpoint, options = {}) => {
   try {
     const response = await fetch(url, config);
     
+    // Check if response exists
+    if (!response) {
+      throw new Error('No response received from server');
+    }
+    
     // Handle non-JSON responses (e.g., file downloads)
     const contentType = response.headers.get('content-type');
     let data;
     
-    if (contentType && contentType.includes('application/json')) {
-      data = await response.json();
-    } else {
-      data = await response.text();
+    try {
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        data = await response.text();
+      }
+    } catch (parseError) {
+      console.error('Failed to parse response:', parseError);
+      data = null;
+    }
+
+    // Ensure data is not undefined
+    if (data === undefined || data === null) {
+      data = { error: 'No data received from server' };
     }
 
     if (!response.ok) {
@@ -157,10 +172,29 @@ const makeRequest = async (endpoint, options = {}) => {
       throw new Error(errorMessage);
     }
 
-    return data;
+    // Ensure consistent return structure
+    if (typeof data === 'object' && data !== null) {
+      return data;
+    } else {
+      // Wrap non-object responses in a data property
+      return { data: data };
+    }
   } catch (error) {
-    console.error('API Request Error:', error);
-    throw error;
+    console.error('🚨 API REQUEST FAILED v7.2:', {
+      url: `${FINAL_API_BASE_URL}${endpoint}`,
+      endpoint,
+      method: options.method || 'GET',
+      error: error.message,
+      stack: error.stack,
+      time: new Date().toISOString()
+    });
+    
+    // Return a safe error response structure to prevent undefined access
+    throw {
+      message: error.message || 'Request failed',
+      status: error.status || 500,
+      data: null
+    };
   }
 };
 
