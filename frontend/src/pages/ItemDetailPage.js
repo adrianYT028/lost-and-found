@@ -22,7 +22,18 @@ const ItemDetailPage = () => {
       setLoading(true);
       setError('');
       const response = await apiService.items.getById(id);
-      setItem(response.data.item);
+      console.log('Item detail response:', response);
+      
+      // Handle different response structures
+      if (response && response.data && response.data.item) {
+        setItem(response.data.item);
+      } else if (response && response.data) {
+        setItem(response.data);
+      } else if (response) {
+        setItem(response);
+      } else {
+        throw new Error('No item data received');
+      }
     } catch (err) {
       console.error('Error fetching item:', err);
       setError('Failed to load item details. Please try again.');

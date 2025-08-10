@@ -106,11 +106,18 @@ const AuthPage = () => {
         });
         
         // Use context to set user
-        console.log('Login response:', response.data);
+        console.log('Login response:', response);
+        console.log('Login response data:', response?.data);
+        
+        // Check if response has expected structure
+        if (!response || !response.data || !response.data.user || !response.data.token) {
+          throw new Error('Invalid response structure from server');
+        }
+        
         login(response.data.user, response.data.token);
         
         // Redirect admin users to admin dashboard
-        if (response.data.user.role === 'admin') {
+        if (response.data.user && response.data.user.role === 'admin') {
           console.log('Redirecting admin to admin dashboard');
           navigate('/admin');
         } else {
@@ -132,6 +139,14 @@ const AuthPage = () => {
         });
         
         // Use context to set user
+        console.log('Register response:', response);
+        console.log('Register response data:', response?.data);
+        
+        // Check if response has expected structure
+        if (!response || !response.data || !response.data.user || !response.data.token) {
+          throw new Error('Invalid response structure from server');
+        }
+        
         login(response.data.user, response.data.token);
         
         // Redirect to dashboard/home
