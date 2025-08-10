@@ -16,7 +16,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import './styles/globals.css';
 
 function App() {
-  console.log('🔥 CACHE BUSTER ACTIVE:', CACHE_BUSTER);
+  console.log('� FRESH DEPLOYMENT ACTIVE:', CACHE_BUSTER);
   return (
     <AuthProvider>
       <Router>

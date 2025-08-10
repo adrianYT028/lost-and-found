@@ -1,9 +1,11 @@
-// API Configuration and Service Layer - SUPABASE + VERCEL v5.0 - 2025-08-10
-// HARDCODED FOR PRODUCTION - NO MORE CACHE ISSUES
-const API_BASE_URL = 'https://college-lost-and-found.vercel.app/api';
+// API Configuration and Service Layer - SUPABASE + VERCEL v6.0 - 2025-08-10
+// FRESH DEPLOYMENT - NEW VERCEL PROJECT
+const API_BASE_URL = window.location.hostname.includes('vercel.app')
+  ? `https://${window.location.hostname}/api`
+  : 'http://localhost:3001/api';
 
-console.log('🔧 API_BASE_URL HARDCODED:', API_BASE_URL);
-console.log('🔧 Version: v5.0 - MAJOR CACHE BUST');
+console.log('� FRESH DEPLOYMENT v6.0 - API_BASE_URL:', API_BASE_URL);
+console.log('� Hostname:', window.location.hostname);
 
 // API Endpoints
 export const API_ENDPOINTS = {
@@ -63,7 +65,7 @@ const httpMethods = {
 // Request helper function
 const makeRequest = async (endpoint, options = {}) => {
   const url = `${API_BASE_URL}${endpoint}`;
-  console.log('🔥 API REQUEST URL v5.0 HARDCODED:', url, 'Time:', new Date().toISOString()); // MAJOR VERSION BUMP
+  console.log('🔥 API REQUEST URL v6.0 FRESH:', url, 'Time:', new Date().toISOString()); // FRESH DEPLOYMENT
   
   // Get token from localStorage
   const token = localStorage.getItem('token');
