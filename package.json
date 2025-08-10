@@ -1,0 +1,24 @@
+{
+  "name": "lost-and-found-app",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "npm run dev --prefix frontend",
+    "build": "npm run build --prefix frontend",
+    "start": "npm start --prefix frontend",
+    "install-frontend": "npm install --prefix frontend",
+    "install-backend": "npm install --prefix backend",
+    "install-all": "npm run install-frontend && npm run install-backend"
+  },
+  "description": "AI-powered lost and found platform for educational institutions",
+  "keywords": [
+    "lost-and-found",
+    "react",
+    "tailwind",
+    "ai",
+    "education",
+    "community"
+  ],
+  "author": "Bennett University Team",
+  "license": "MIT"
+}
