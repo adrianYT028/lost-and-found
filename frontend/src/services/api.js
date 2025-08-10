@@ -1,8 +1,9 @@
-// API Configuration and Service Layer - CACHE BUST v3.0 - 2025-07-21
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5002/api';
+// API Configuration and Service Layer - SUPABASE + VERCEL v4.0 - 2025-08-10
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://college-lost-and-found-97ehhf593-kartiks-projects-7abc1c80.vercel.app/api'
+  : 'http://localhost:3001/api';
 
-console.log('🔧 API_BASE_URL:', API_BASE_URL);
-console.log('🔧 REACT_APP_API_URL:', process.env.REACT_APP_API_URL);
+console.log('🔧 API_BASE_URL:', API_BASE_URL, 'Environment:', process.env.NODE_ENV);
 
 // API Endpoints
 export const API_ENDPOINTS = {
