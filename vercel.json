@@ -1,32 +1,19 @@
 {
   "version": 2,
-  "name": "lost-and-found-app",
+  "name": "lost-found-v2",
   "functions": {
     "api/**/*.js": {
       "runtime": "nodejs18.x"
     }
   },
-  "builds": [
-    {
-      "src": "frontend/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "build"
-      }
-    }
-  ],
   "routes": [
     {
       "src": "/api/(.*)",
       "dest": "/api/$1"
     },
     {
-      "src": "/static/(.*)",
-      "dest": "/static/$1"
-    },
-    {
       "src": "/(.*)",
-      "dest": "/index.html"
+      "dest": "/frontend/$1"
     }
   ],
   "headers": [
@@ -40,7 +27,6 @@
       ]
     }
   ],
-  "buildCommand": "cd frontend && npm run build",
-  "outputDirectory": "frontend/build",
-  "framework": "create-react-app"
+  "buildCommand": "cd frontend && npm install && npm run build",
+  "outputDirectory": "frontend/build"
 }
