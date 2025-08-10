@@ -94,23 +94,32 @@ const ReportPage = () => {
         reward: formData.reward || null
       };
 
-      // Create FormData for file upload if files exist
-      const apiFormData = new FormData();
-      Object.keys(itemData).forEach(key => {
-        if (key === 'contactInfo' || key === 'location') {
-          apiFormData.append(key, JSON.stringify(itemData[key]));
-        } else {
-          apiFormData.append(key, itemData[key]);
-        }
-      });
+      // If there are uploaded files, use FormData, otherwise use JSON
+      let requestData;
+      if (uploadedFiles.length > 0) {
+        // Create FormData for file upload
+        const apiFormData = new FormData();
+        Object.keys(itemData).forEach(key => {
+          if (key === 'contactInfo' || key === 'location') {
+            apiFormData.append(key, JSON.stringify(itemData[key]));
+          } else {
+            apiFormData.append(key, itemData[key]);
+          }
+        });
 
-      // Add uploaded files
-      uploadedFiles.forEach((file, index) => {
-        apiFormData.append('images', file);
-      });
+        // Add uploaded files
+        uploadedFiles.forEach((file, index) => {
+          apiFormData.append('images', file);
+        });
+        
+        requestData = apiFormData;
+      } else {
+        // Send as JSON if no files
+        requestData = itemData;
+      }
 
       // Call API to create item
-      const response = await apiService.items.create(apiFormData);
+      const response = await apiService.items.create(requestData);
       console.log('Item created successfully:', response);
       setSubmitted(true);
 
