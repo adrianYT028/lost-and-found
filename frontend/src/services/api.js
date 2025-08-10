@@ -73,14 +73,14 @@ const httpMethods = {
 // Request helper function
 const makeRequest = async (endpoint, options = {}) => {
   const url = `${FINAL_API_BASE_URL}${endpoint}`;
-  console.log('🔥 API REQUEST v7.0:', {
+  console.log('🔥 API REQUEST v7.1:', {
     endpoint,
     fullUrl: url,
+    method: options.method || 'GET',
     hostname: window.location.hostname,
     isGitDeployment,
     time: new Date().toISOString()
   });
-  console.log('🔥 API REQUEST URL v6.0 FRESH:', url, 'Time:', new Date().toISOString()); // FRESH DEPLOYMENT
   
   // Get token from localStorage
   const token = localStorage.getItem('token');
@@ -129,12 +129,29 @@ const makeRequest = async (endpoint, options = {}) => {
         errorMessage = data;
       }
 
+      // Enhanced error logging for debugging
+      console.error('🚨 API ERROR v7.1:', {
+        status: response.status,
+        statusText: response.statusText,
+        url: `${FINAL_API_BASE_URL}${endpoint}`,
+        endpoint,
+        method: options.method || 'GET',
+        errorMessage,
+        response: data,
+        time: new Date().toISOString()
+      });
+
       // Handle authentication errors
       if (response.status === 401) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         window.location.href = '/auth';
         return;
+      }
+
+      // Handle 404 errors specifically
+      if (response.status === 404) {
+        errorMessage = `Resource not found: ${endpoint}`;
       }
 
       throw new Error(errorMessage);
