@@ -1,5 +1,5 @@
 console.log('API Configuration Debug:', { 
-  API_BASE_URL: process.env.REACT_APP_API_URL || 'https://college-lost-and-found-niw2mbtiq-kartiks-projects-7abc1c80.vercel.app/api',
+  API_BASE_URL: process.env.REACT_APP_API_URL || 'https://college-lost-and-found.vercel.app/api',
   LOGIN_ENDPOINT: '/api/auth/login',
   ITEMS_ENDPOINT: '/api/items'
 });

@@ -2,7 +2,7 @@
 const API_BASE_URL = process.env.REACT_APP_API_URL || 
   (window.location.hostname === 'localhost' 
     ? 'http://localhost:3001/api'
-    : 'https://college-lost-and-found-niw2mbtiq-kartiks-projects-7abc1c80.vercel.app/api');
+    : 'https://college-lost-and-found.vercel.app/api');
 
 console.log('🔧 API_BASE_URL:', API_BASE_URL, 'Environment:', process.env.NODE_ENV);
 
