@@ -4,34 +4,83 @@ const { supabase } = require('./lib/supabase');
 // Helper function to parse request body
 async function parseBody(req) {
   return new Promise((resolve, reject) => {
-    let body = '';
+    // Check if it's FormData (multipart/form-data)
+    if (req.headers['content-type']?.includes('multipart/form-data')) {
+      // For FormData with files, we'll use a simplified approach
+      // Since file upload to cloud storage is complex, we'll skip files for now
+      // but parse the text fields from FormData
+      
+      let body = '';
+      req.on('data', chunk => {
+        body += chunk.toString();
+      });
+      
+      req.on('end', () => {
+        // Parse multipart form data manually (simplified)
+        const formData = {};
+        
+        // Look for Content-Disposition headers and extract field names/values
+        const parts = body.split('------WebKitFormBoundary');
+        
+        parts.forEach(part => {
+          if (part.includes('Content-Disposition: form-data')) {
+            // Extract field name
+            const nameMatch = part.match(/name="([^"]+)"/);
+            if (nameMatch) {
+              const fieldName = nameMatch[1];
+              
+              // Extract value (everything after the headers)
+              const lines = part.split('\r\n');
+              let valueStartIndex = -1;
+              
+              for (let i = 0; i < lines.length; i++) {
+                if (lines[i] === '') {
+                  valueStartIndex = i + 1;
+                  break;
+                }
+              }
+              
+              if (valueStartIndex !== -1 && valueStartIndex < lines.length) {
+                let value = lines.slice(valueStartIndex).join('\r\n').trim();
+                
+                // Remove trailing boundary markers
+                value = value.replace(/------WebKitFormBoundary.*$/, '').trim();
+                
+                if (value && !part.includes('filename=')) {
+                  // Only process non-file fields
+                  formData[fieldName] = value;
+                }
+              }
+            }
+          }
+        });
+        
+        console.log('Parsed FormData fields:', formData);
+        resolve(formData);
+      });
+      
+      req.on('error', reject);
+      return;
+    }
     
+    // Handle JSON and other content types
+    let body = '';
     req.on('data', chunk => {
       body += chunk.toString();
     });
     
     req.on('end', () => {
       try {
-        // Try to parse as JSON first
         if (req.headers['content-type']?.includes('application/json')) {
           resolve(JSON.parse(body));
-        } 
-        // Handle FormData
-        else if (req.headers['content-type']?.includes('multipart/form-data')) {
-          // For FormData, we'll need to parse it manually or use a library
-          // For now, let's expect JSON from the frontend
-          resolve({});
-        }
-        // Handle URL-encoded data
-        else if (req.headers['content-type']?.includes('application/x-www-form-urlencoded')) {
+        } else if (req.headers['content-type']?.includes('application/x-www-form-urlencoded')) {
           const parsed = {};
           body.split('&').forEach(pair => {
             const [key, value] = pair.split('=');
             parsed[decodeURIComponent(key)] = decodeURIComponent(value);
           });
           resolve(parsed);
-        }
-        else {
+        } else {
           // Try JSON parsing as fallback
           resolve(JSON.parse(body));
         }
