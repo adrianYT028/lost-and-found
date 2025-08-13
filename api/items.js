@@ -1,98 +1,7 @@
+const express = require('express');
 const jwt = require('jsonwebtoken');
 const { supabase } = require('./lib/supabase');
-
-// Helper function to parse request body
-async function parseBody(req) {
-  return new Promise((resolve, reject) => {
-    // Check if it's FormData (multipart/form-data)
-    if (req.headers['content-type']?.includes('multipart/form-data')) {
-      // For FormData with files, we'll use a simplified approach
-      // Since file upload to cloud storage is complex, we'll skip files for now
-      // but parse the text fields from FormData
-      
-      let body = '';
-      req.on('data', chunk => {
-        body += chunk.toString();
-      });
-      
-      req.on('end', () => {
-        // Parse multipart form data manually (simplified)
-        const formData = {};
-        
-        // Look for Content-Disposition headers and extract field names/values
-        const parts = body.split('------WebKitFormBoundary');
-        
-        parts.forEach(part => {
-          if (part.includes('Content-Disposition: form-data')) {
-            // Extract field name
-            const nameMatch = part.match(/name="([^"]+)"/);
-            if (nameMatch) {
-              const fieldName = nameMatch[1];
-              
-              // Extract value (everything after the headers)
-              const lines = part.split('\r\n');
-              let valueStartIndex = -1;
-              
-              for (let i = 0; i < lines.length; i++) {
-                if (lines[i] === '') {
-                  valueStartIndex = i + 1;
-                  break;
-                }
-              }
-              
-              if (valueStartIndex !== -1 && valueStartIndex < lines.length) {
-                let value = lines.slice(valueStartIndex).join('\r\n').trim();
-                
-                // Remove trailing boundary markers
-                value = value.replace(/------WebKitFormBoundary.*$/, '').trim();
-                
-                if (value && !part.includes('filename=')) {
-                  // Only process non-file fields
-                  formData[fieldName] = value;
-                }
-              }
-            }
-          }
-        });
-        
-        console.log('Parsed FormData fields:', formData);
-        resolve(formData);
-      });
-      
-      req.on('error', reject);
-      return;
-    }
-    
-    // Handle JSON and other content types
-    let body = '';
-    req.on('data', chunk => {
-      body += chunk.toString();
-    });
-    
-    req.on('end', () => {
-      try {
-        if (req.headers['content-type']?.includes('application/json')) {
-          resolve(JSON.parse(body));
-        } else if (req.headers['content-type']?.includes('application/x-www-form-urlencoded')) {
-          const parsed = {};
-          body.split('&').forEach(pair => {
-            const [key, value] = pair.split('=');
-            parsed[decodeURIComponent(key)] = decodeURIComponent(value);
-          });
-          resolve(parsed);
-        } else {
-          // Try JSON parsing as fallback
-          resolve(JSON.parse(body));
-        }
-      } catch (error) {
-        console.error('Body parsing error:', error);
-        resolve({});
-      }
-    });
-    
-    req.on('error', reject);
-  });
-}
+const router = express.Router();
 
 // Helper function to verify JWT token
 function verifyToken(req) {
@@ -110,161 +19,56 @@ function verifyToken(req) {
   }
 }
 
-module.exports = async function handler(req, res) {
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization');
-
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
-
+// GET /api/items - Get all items
+router.get('/', async (req, res) => {
   try {
-    if (req.method === 'GET') {
-      // Verify token to check user role
-      const user = verifyToken(req);
-      let isAdmin = false;
-      
-      if (user) {
-        // Check if user is admin
-        const { data: userData, error: userError } = await supabase
-          .from('Users')
-          .select('role')
-          .eq('id', user.id)
-          .single();
-          
-        if (!userError && userData) {
-          isAdmin = userData.role === 'admin';
-        }
-      }
-
-      // Build query based on user permissions
-      let query = supabase
-        .from('Items')
-        .select(`
-          *,
-          owner:Users!userId (
-            firstName,
-            lastName,
-            studentId,
-            email,
-            phoneNumber
-          )
-        `)
-        .eq('status', 'open')
-        .order('createdAt', { ascending: false })
-        .limit(20);
-
-      // If not admin, only show lost items (not found items)
-      if (!isAdmin) {
-        query = query.eq('type', 'lost');
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error('Error fetching items:', error);
-        return res.status(500).json({ message: 'Failed to fetch items' });
-      }
-
-      res.status(200).json(data);
-    }
-
-    else if (req.method === 'POST') {
-      // Verify authentication for creating items
-      const user = verifyToken(req);
-      if (!user) {
-        return res.status(401).json({ message: 'Unauthorized - Please log in to create items' });
-      }
-
-      // Parse request body manually
-      const body = await parseBody(req);
-      
-      console.log('POST request received');
-      console.log('Content-Type:', req.headers['content-type']);
-      console.log('Parsed body:', body);
-      console.log('Authenticated user:', user.id);
-      
-      // Extract fields from parsed body
-      const { title, description, category, location, type, contactInfo, dateTime, reward } = body;
-      
-      console.log('Extracted fields:', {
-        title, description, category, location, type, contactInfo, dateTime, reward
-      });
-      
-      // Parse JSON strings if they exist (from FormData)
-      let parsedLocation = location;
-      let parsedContactInfo = contactInfo;
-      
-      try {
-        if (typeof location === 'string') {
-          parsedLocation = JSON.parse(location);
-        }
-        if (typeof contactInfo === 'string') {
-          parsedContactInfo = JSON.parse(contactInfo);
-        }
-      } catch (e) {
-        console.log('No JSON parsing needed for location/contactInfo');
-      }
-
-      // Validate required fields
-      if (!title || !description || !type) {
-        console.log('Validation failed - missing required fields');
-        return res.status(400).json({ 
-          message: 'Required fields are missing: title, description, type',
-          received: { 
-            title: !!title, 
-            description: !!description, 
-            type: !!type,
-            allFields: Object.keys(body || {})
-          }
-        });
-      }
-
-      // Extract location string from object or use as-is
-      const locationString = parsedLocation?.building || location || 'Unknown';
-
-      console.log('Creating item with data:', {
-        title, description, category, location: locationString, type, userId: user.id
-      });
-
-      // Create the item in database with userId
-      const { data, error } = await supabase
-        .from('Items')
-        .insert([{
-          title,
-          description,
-          category,
-          location: locationString,
-          type,
-          images: [],
-          status: 'open',
-          userId: user.id
-        }])
-        .select()
+    // Verify token to check user role
+    const user = verifyToken(req);
+    let isAdmin = false;
+    
+    if (user) {
+      // Check if user is admin
+      const { data: userData, error: userError } = await supabase
+        .from('Users')
+        .select('role')
+        .eq('id', user.id)
         .single();
-
-      if (error) {
-        console.error('Error creating item:', error);
-        return res.status(500).json({ 
-          message: 'Failed to create item', 
-          error: error.message,
-          details: error.details || error.hint
-        });
+        
+      if (!userError && userData) {
+        isAdmin = userData.role === 'admin';
       }
-
-      console.log('Item created successfully:', data);
-      res.status(201).json(data);
     }
 
-    else {
-      res.setHeader('Allow', ['GET', 'POST']);
-      res.status(405).json({ message: 'Method not allowed' });
+    // Build query based on user permissions
+    let query = supabase
+      .from('Items')
+      .select(`
+        *,
+        owner:Users!userId (
+          firstName,
+          lastName,
+          studentId,
+          email,
+          phoneNumber
+        )
+      `)
+      .eq('status', 'open')
+      .order('createdAt', { ascending: false })
+      .limit(20);
+
+    // If not admin, only show lost items (not found items)
+    if (!isAdmin) {
+      query = query.eq('type', 'lost');
     }
 
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Error fetching items:', error);
+      return res.status(500).json({ message: 'Failed to fetch items' });
+    }
+
+    res.json(data);
   } catch (error) {
     console.error('Items API error:', error);
     res.status(500).json({ 
@@ -272,4 +76,66 @@ module.exports = async function handler(req, res) {
       error: error.message 
     });
   }
-};
+});
+
+// POST /api/items - Create new item
+router.post('/', async (req, res) => {
+  try {
+    // Verify authentication for creating items
+    const user = verifyToken(req);
+    if (!user) {
+      return res.status(401).json({ message: 'Unauthorized - Please log in to create items' });
+    }
+
+    const { title, description, category, location, type, contactInfo, dateTime, reward } = req.body;
+    
+    console.log('Creating item with data:', {
+      title, description, category, location, type, userId: user.id
+    });
+
+    // Validate required fields
+    if (!title || !description || !type) {
+      return res.status(400).json({ 
+        message: 'Required fields are missing: title, description, type'
+      });
+    }
+
+    // Extract location string from object or use as-is
+    const locationString = location?.building || location || 'Unknown';
+
+    // Create the item in database with userId
+    const { data, error } = await supabase
+      .from('Items')
+      .insert([{
+        title,
+        description,
+        category,
+        location: locationString,
+        type,
+        images: [],
+        status: 'open',
+        userId: user.id
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating item:', error);
+      return res.status(500).json({ 
+        message: 'Failed to create item', 
+        error: error.message
+      });
+    }
+
+    console.log('Item created successfully:', data);
+    res.status(201).json(data);
+  } catch (error) {
+    console.error('Items API error:', error);
+    res.status(500).json({ 
+      message: 'Internal server error', 
+      error: error.message 
+    });
+  }
+});
+
+module.exports = router;
