@@ -268,10 +268,17 @@ export const apiService = {
 
   // Items services
   items: {
-    getAll: (params = {}) => safeApiCall(() => {
-      const searchParams = new URLSearchParams(params);
-      return makeRequest(`${API_ENDPOINTS.ITEMS}?${searchParams}`);
-    }),
+    getAll: async (params = {}) => {
+      try {
+        const searchParams = new URLSearchParams(params);
+        const response = await makeRequest(`${API_ENDPOINTS.ITEMS}?${searchParams}`);
+        console.log('🔍 items.getAll raw response:', response);
+        return response;
+      } catch (error) {
+        console.error('🚨 items.getAll error:', error);
+        throw error;
+      }
+    },
     
     getById: (id) => safeApiCall(() => makeRequest(API_ENDPOINTS.ITEM_BY_ID(id))),
     

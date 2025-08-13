@@ -51,32 +51,68 @@ const BrowsePage = () => {
       const response = await apiService.items.getAll();
       console.log('🔍 BrowsePage: API Response received:', response);
       
-      // Handle different response structures safely
+      // Handle safeApiCall wrapper response structure
       let itemsArray = [];
+      
+      // Check if response has error first
+      if (response && response.error) {
+        console.error('🚨 API returned error:', response.error);
+        setError(response.error);
+        setItems([]);
+        return;
+      }
+      
+      // Handle different response structures safely
       if (Array.isArray(response)) {
+        // Direct array response
         itemsArray = response;
         console.log('🔍 Response is direct array');
       } else if (response && Array.isArray(response.data)) {
+        // Wrapped in data property
         itemsArray = response.data;
         console.log('🔍 Response has data array');
       } else if (response && response.data && Array.isArray(response.data.items)) {
+        // Nested items array
         itemsArray = response.data.items;
         console.log('🔍 Response has nested items array');
+      } else if (response && response.data === null) {
+        // safeApiCall returned null data
+        console.log('🔍 API call returned null data');
+        itemsArray = [];
       } else {
         console.warn('🔍 Unexpected response structure:', response);
-        itemsArray = [];
+        // Try to extract any array we can find
+        const possibleArray = response?.data || response;
+        itemsArray = Array.isArray(possibleArray) ? possibleArray : [];
       }
       
       console.log('🔍 Final items array:', itemsArray);
       console.log('🔍 Items count:', itemsArray.length);
-      setItems(itemsArray);
+      
+      // Validate items have required properties
+      const validItems = itemsArray.filter(item => 
+        item && typeof item === 'object' && item.title && item.type
+      );
+      
+      console.log('🔍 Valid items after filtering:', validItems.length);
+      
+      if (validItems.length !== itemsArray.length) {
+        console.warn('🔍 Some items were invalid and filtered out');
+      }
+      
+      setItems(validItems);
+      
+      // Debug: Log sample item structure
+      if (validItems.length > 0) {
+        console.log('🔍 Sample item structure:', validItems[0]);
+      }
       
       // Debug: Log categories in the items
-      const categoriesInItems = [...new Set(itemsArray.map(item => item.category).filter(Boolean))];
+      const categoriesInItems = [...new Set(validItems.map(item => item.category).filter(Boolean))];
       console.log('🔍 Categories found in items:', categoriesInItems);
       
       // Debug: Log types in the items
-      const typesInItems = [...new Set(itemsArray.map(item => item.type).filter(Boolean))];
+      const typesInItems = [...new Set(validItems.map(item => item.type).filter(Boolean))];
       console.log('🔍 Types found in items:', typesInItems);
       
     } catch (err) {
@@ -280,10 +316,24 @@ const BrowsePage = () => {
         </div>
 
         {/* Results Summary */}
-        <div className="mb-6">
+        <div className="mb-6 flex justify-between items-center">
           <p className="text-gray-600">
             Showing {filteredItems.length} of {items.length} items
           </p>
+          <div className="flex space-x-2">
+            <button 
+              onClick={fetchItems}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm"
+            >
+              Refresh Items
+            </button>
+            <a 
+              href="/test-api"
+              className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm"
+            >
+              Test API
+            </a>
+          </div>
         </div>
 
         {/* Loading State */}
@@ -342,6 +392,15 @@ const BrowsePage = () => {
             <Search className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 mb-2">No items yet</h3>
             <p className="text-gray-600 mb-4">Be the first to report a lost or found item!</p>
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4 max-w-md mx-auto">
+              <h4 className="font-medium text-yellow-800 mb-2">Possible reasons:</h4>
+              <ul className="text-sm text-yellow-700 text-left space-y-1">
+                <li>• Database might be empty - run database-setup.sql in Supabase</li>
+                <li>• Only lost items are shown to public users</li>
+                <li>• API connection might need configuration</li>
+                <li>• Items might be filtered by status or type</li>
+              </ul>
+            </div>
             <div className="space-y-2">
               <a 
                 href="/report" 
@@ -349,6 +408,12 @@ const BrowsePage = () => {
               >
                 Report an Item
               </a>
+              <button 
+                onClick={fetchItems}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg mr-2"
+              >
+                Retry Loading
+              </button>
               <a 
                 href="/test-api"
                 className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm inline-block"
