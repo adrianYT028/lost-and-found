@@ -124,8 +124,25 @@ module.exports = async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      // Get all items
-      const { data, error } = await supabase
+      // Verify token to check user role
+      const user = verifyToken(req);
+      let isAdmin = false;
+      
+      if (user) {
+        // Check if user is admin
+        const { data: userData, error: userError } = await supabase
+          .from('Users')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+          
+        if (!userError && userData) {
+          isAdmin = userData.role === 'admin';
+        }
+      }
+
+      // Build query based on user permissions
+      let query = supabase
         .from('Items')
         .select(`
           *,
@@ -140,6 +157,13 @@ module.exports = async function handler(req, res) {
         .eq('status', 'open')
         .order('createdAt', { ascending: false })
         .limit(20);
+
+      // If not admin, only show lost items (not found items)
+      if (!isAdmin) {
+        query = query.eq('type', 'lost');
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error('Error fetching items:', error);

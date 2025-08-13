@@ -139,6 +139,7 @@ const makeRequest = async (endpoint, options = {}) => {
         errorMessage,
         response: data,
         time: new Date().toISOString()
+      
       });
 
       // Handle authentication errors

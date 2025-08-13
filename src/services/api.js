@@ -1,8 +1,8 @@
-// API Configuration and Service Layer - SUPABASE + VERCEL v7.0 - 2025-08-11
-// PRODUCTION DEPLOYMENT FIX
+// API Configuration and Service Layer - SUPABASE + VERCEL v7.1 - 2025-08-14
+// PRODUCTION DEPLOYMENT FIX - Local dev points to deployed API
 const API_BASE_URL = window.location.hostname.includes('vercel.app')
   ? `https://${window.location.hostname}/api`
-  : 'http://localhost:3001/api';
+  : 'https://lostandfound-zeta.vercel.app/api'; // Use deployed API for local testing
 
 // Force production URL if on git deployment
 const PRODUCTION_URL = 'lostandfound-zeta.vercel.app';
@@ -47,6 +47,7 @@ export const API_ENDPOINTS = {
   // Admin
   ADMIN_DASHBOARD_STATS: '/admin/dashboard/stats',
   ADMIN_ITEMS: '/admin/items',
+  ADMIN_FOUND_ITEMS: '/admin/found-items',
   ADMIN_USERS: '/admin/users',
   ADMIN_ITEM_STATUS: (id) => `/admin/items/${id}/status`,
   ADMIN_ITEM_READY_FOR_COLLECTION: (id) => `/admin/items/${id}/ready-for-collection`,
@@ -340,6 +341,8 @@ export const apiService = {
     getDashboardStats: () => safeApiCall(() => makeRequest(API_ENDPOINTS.ADMIN_DASHBOARD_STATS)),
     
     getItems: () => safeApiCall(() => makeRequest(API_ENDPOINTS.ADMIN_ITEMS)),
+    
+    getFoundItems: () => safeApiCall(() => makeRequest(API_ENDPOINTS.ADMIN_FOUND_ITEMS)),
     
     getUsers: () => safeApiCall(() => makeRequest(API_ENDPOINTS.ADMIN_USERS)),
     

@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/common/Navbar';
 import Footer from '../components/common/Footer';
-import { Search, Filter, MapPin, Clock, User, Eye, Loader2 } from 'lucide-react';
-import { apiService, getImageUrl } from '../services/api';
+import { Search, Filter, MapPin, Clock, User, Eye, Loader2, Shield } from 'lucide-react';
+import { apiService, getImageUrl, isAuthenticated } from '../services/api';
 
 const BrowsePage = () => {
   const navigate = useNavigate();
@@ -13,6 +13,24 @@ const BrowsePage = () => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Check if user is admin
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (isAuthenticated()) {
+        try {
+          const response = await apiService.users.getProfile();
+          if (response && response.data && response.data.role === 'admin') {
+            setIsAdmin(true);
+          }
+        } catch (err) {
+          console.log('Not admin or not logged in');
+        }
+      }
+    };
+    checkAdminStatus();
+  }, []);
 
   // Fetch items on component mount
   useEffect(() => {
@@ -55,7 +73,7 @@ const BrowsePage = () => {
   };
 
   const categories = ['all', 'Electronics', 'Bags', 'Jewelry', 'Accessories', 'Documents', 'Clothing'];
-  const types = ['all', 'lost', 'found'];
+  const types = isAdmin ? ['all', 'lost', 'found'] : ['all', 'lost'];
 
   const filteredItems = Array.isArray(items) ? items.filter(item => {
     const matchesSearch = item.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -175,6 +193,23 @@ const BrowsePage = () => {
 
       {/* Search and Filters */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Security Notice for Regular Users */}
+        {!isAdmin && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div className="flex items-start">
+              <Shield className="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" />
+              <div>
+                <h3 className="text-sm font-medium text-blue-800">Security Notice</h3>
+                <p className="text-sm text-blue-700 mt-1">
+                  For security reasons, only <strong>Lost Items</strong> are shown to the public. 
+                  Found items are only visible to administrators to prevent false claims. 
+                  If you found an item, please report it using the "Report Found Item" option.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
           <div className="grid md:grid-cols-4 gap-4">
             {/* Search Bar */}

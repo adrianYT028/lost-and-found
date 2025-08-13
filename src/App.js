@@ -11,6 +11,7 @@ import ItemDetailPage from './pages/ItemDetailPage';
 import ProfilePage from './pages/ProfilePage';
 import MyItemsPage from './pages/MyItemsPage';
 import AdminDashboard from './components/admin/AdminDashboard';
+import AdminFoundItemsPage from './pages/AdminFoundItemsPage';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './styles/globals.css';
@@ -42,6 +43,7 @@ function App() {
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/my-items" element={<MyItemsPage />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/found-items" element={<AdminFoundItemsPage />} />
           </Routes>
         </div>
       </Router>

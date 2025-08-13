@@ -253,8 +253,14 @@ const AdminDashboard = () => {
             ))}
             <div className="ml-auto flex space-x-2">
               <button
+                onClick={() => navigate('/admin/found-items')}
+                className="px-4 py-2 bg-green-600 text-white rounded text-sm hover:bg-green-700 flex items-center"
+              >
+                🔍 Review Found Items
+              </button>
+              <button
                 onClick={() => exportData('items')}
-                className="px-4 py-2 bg-green-600 text-white rounded text-sm hover:bg-green-700"
+                className="px-4 py-2 bg-gray-600 text-white rounded text-sm hover:bg-gray-700"
               >
                 Export Items
               </button>
