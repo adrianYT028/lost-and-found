@@ -1,18 +1,32 @@
-// API Configuration and Service Layer - SUPABASE + VERCEL v7.1 - 2025-08-14
-// PRODUCTION DEPLOYMENT FIX - Local dev points to deployed API
-const API_BASE_URL = window.location.hostname.includes('vercel.app')
-  ? `https://${window.location.hostname}/api`
-  : 'https://lostandfound-zeta.vercel.app/api'; // Use deployed API for local testing
+// API Configuration and Service Layer - MULTI-PLATFORM v8.0 - 2025-08-14
+// Supports Vercel, Azure Static Web Apps, and local development
 
-// Force production URL if on git deployment
-const PRODUCTION_URL = 'lostandfound-zeta.vercel.app';
-const isGitDeployment = window.location.hostname.includes('lostandfound-git-master');
-const FINAL_API_BASE_URL = isGitDeployment 
-  ? `https://${PRODUCTION_URL}/api`
-  : API_BASE_URL;
+const getApiBaseUrl = () => {
+  const hostname = window.location.hostname;
+  
+  // Azure Static Web Apps
+  if (hostname.includes('azurestaticapps.net')) {
+    return `https://${hostname}/api`;
+  }
+  
+  // Vercel deployment
+  if (hostname.includes('vercel.app')) {
+    return `https://${hostname}/api`;
+  }
+  
+  // Git deployment fallback
+  if (hostname.includes('lostandfound-git-master')) {
+    return 'https://lostandfound-zeta.vercel.app/api';
+  }
+  
+  // Local development - use deployed API for testing
+  return 'https://lostandfound-zeta.vercel.app/api';
+};
 
-console.log('🚀 DEPLOYMENT v7.0 - Current hostname:', window.location.hostname);
-console.log('🚀 Is Git deployment:', isGitDeployment);
+const FINAL_API_BASE_URL = getApiBaseUrl();
+
+console.log('🚀 MULTI-PLATFORM DEPLOYMENT v8.0');
+console.log('🚀 Current hostname:', window.location.hostname);
 console.log('🚀 Final API_BASE_URL:', FINAL_API_BASE_URL);
 
 // API Endpoints
