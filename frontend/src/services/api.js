@@ -1,19 +1,74 @@
-// API Configuration and Service Layer - SUPABASE + VERCEL v7.0 - 2025-08-11
-// PRODUCTION DEPLOYMENT FIX
-const API_BASE_URL = window.location.hostname.includes('vercel.app')
-  ? `https://${window.location.hostname}/api`
-  : 'http://localhost:3001/api';
+// API Configuration and Service Layer - MULTI-PLATFORM v8.0 - 2025-08-14
+// SUPPORTS: VERCEL + AZURE + NETLIFY + HEROKU + LOCAL
 
-// Force production URL if on git deployment
-const PRODUCTION_URL = 'lostandfound-zeta.vercel.app';
-const isGitDeployment = window.location.hostname.includes('lostandfound-git-master');
-const FINAL_API_BASE_URL = isGitDeployment 
-  ? `https://${PRODUCTION_URL}/api`
-  : API_BASE_URL;
+// Platform detection and API URL configuration
+const detectPlatform = () => {
+  const hostname = window.location.hostname;
+  const href = window.location.href;
+  
+  // Heroku detection
+  if (hostname.includes('herokuapp.com')) {
+    return {
+      name: 'heroku',
+      apiUrl: `${window.location.origin}/api`,
+      isProduction: true
+    };
+  }
+  
+  // Vercel detection
+  if (hostname.includes('vercel.app')) {
+    return {
+      name: 'vercel',
+      apiUrl: `${window.location.origin}/api`,
+      isProduction: true
+    };
+  }
+  
+  // Azure detection
+  if (hostname.includes('azurestaticapps.net') || hostname.includes('azure.com')) {
+    return {
+      name: 'azure',
+      apiUrl: `${window.location.origin}/api`,
+      isProduction: true
+    };
+  }
+  
+  // Netlify detection
+  if (hostname.includes('netlify.app') || hostname.includes('netlify.com')) {
+    return {
+      name: 'netlify',
+      apiUrl: `${window.location.origin}/.netlify/functions`,
+      isProduction: true
+    };
+  }
+  
+  // GitHub Pages detection
+  if (hostname.includes('github.io')) {
+    return {
+      name: 'github',
+      apiUrl: 'https://your-backend-api.herokuapp.com/api', // Fallback to Heroku API
+      isProduction: true
+    };
+  }
+  
+  // Local development
+  return {
+    name: 'local',
+    apiUrl: 'http://localhost:3001/api',
+    isProduction: false
+  };
+};
 
-console.log('🚀 DEPLOYMENT v7.0 - Current hostname:', window.location.hostname);
-console.log('🚀 Is Git deployment:', isGitDeployment);
-console.log('🚀 Final API_BASE_URL:', FINAL_API_BASE_URL);
+const platform = detectPlatform();
+const API_BASE_URL = platform.apiUrl;
+
+console.log('🚀 MULTI-PLATFORM DEPLOYMENT v8.0:', {
+  platform: platform.name,
+  hostname: window.location.hostname,
+  apiUrl: API_BASE_URL,
+  isProduction: platform.isProduction,
+  timestamp: new Date().toISOString()
+});
 
 // API Endpoints
 export const API_ENDPOINTS = {
@@ -72,13 +127,13 @@ const httpMethods = {
 
 // Request helper function
 const makeRequest = async (endpoint, options = {}) => {
-  const url = `${FINAL_API_BASE_URL}${endpoint}`;
-  console.log('🔥 API REQUEST v7.1:', {
+  const url = `${API_BASE_URL}${endpoint}`;
+  console.log('🔥 API REQUEST v8.0:', {
+    platform: platform.name,
     endpoint,
     fullUrl: url,
     method: options.method || 'GET',
     hostname: window.location.hostname,
-    isGitDeployment,
     time: new Date().toISOString()
   });
   
@@ -130,10 +185,11 @@ const makeRequest = async (endpoint, options = {}) => {
       }
 
       // Enhanced error logging for debugging
-      console.error('🚨 API ERROR v7.1:', {
+      console.error('🚨 API ERROR v8.0:', {
+        platform: platform.name,
         status: response.status,
         statusText: response.statusText,
-        url: `${FINAL_API_BASE_URL}${endpoint}`,
+        url: `${API_BASE_URL}${endpoint}`,
         endpoint,
         method: options.method || 'GET',
         errorMessage,

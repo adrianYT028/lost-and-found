@@ -5,11 +5,13 @@
   "scripts": {
     "dev": "vercel dev",
     "build": "react-scripts build",
-    "start": "react-scripts start",
+    "start": "serve -s build -l $PORT",
+    "start:dev": "react-scripts start",
     "test": "react-scripts test",
     "install-frontend": "npm install --prefix frontend",
     "install-backend": "npm install --prefix backend",
-    "install-all": "npm run install-frontend && npm run install-backend && npm install"
+    "install-all": "npm run install-frontend && npm run install-backend && npm install",
+    "heroku-postbuild": "npm run build"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
@@ -29,8 +31,13 @@
     "react-router-dom": "^6.8.1",
     "react-scripts": "5.0.1",
     "react-toastify": "^11.0.5",
+    "serve": "^14.2.0",
     "tailwindcss": "^3.3.0",
     "web-vitals": "^2.1.4"
+  },
+  "engines": {
+    "node": "18.x",
+    "npm": "9.x"
   },
   "description": "AI-powered lost and found platform for educational institutions",
   "keywords": [
