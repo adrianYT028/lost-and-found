@@ -1,5 +1,7 @@
+const express = require('express');
 const jwt = require('jsonwebtoken');
 const { supabase } = require('../lib/supabase');
+const router = express.Router();
 
 // Helper function to verify JWT token and check admin role
 async function verifyAdminToken(req) {
@@ -30,22 +32,8 @@ async function verifyAdminToken(req) {
   }
 }
 
-module.exports = async function handler(req, res) {
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization');
-
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
-
-  if (req.method !== 'GET') {
-    return res.status(405).json({ message: 'Method not allowed' });
-  }
-
+// GET /api/admin/found-items - Get found items for admin review
+router.get('/', async (req, res) => {
   try {
     // Verify admin access
     const admin = await verifyAdminToken(req);
@@ -84,4 +72,6 @@ module.exports = async function handler(req, res) {
       error: error.message 
     });
   }
-};
+});
+
+module.exports = router;

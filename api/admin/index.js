@@ -5,12 +5,12 @@ const router = express.Router();
 const usersAPI = require('./users');
 const itemsAPI = require('./items');
 const foundItemsAPI = require('./found-items');
-const statsAPI = require('./dashboard/stats');
+const dashboardStatsAPI = require('./dashboard/stats');
 
 // Mount admin routes
 router.use('/users', usersAPI);
 router.use('/items', itemsAPI);
 router.use('/found-items', foundItemsAPI);
-router.use('/dashboard/stats', statsAPI);
+router.use('/dashboard/stats', dashboardStatsAPI);
 
 module.exports = router;
