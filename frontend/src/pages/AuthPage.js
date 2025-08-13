@@ -37,6 +37,7 @@ const AuthPage = () => {
   };
 
   const validateForm = () => {
+    console.log('validateForm called, isLogin:', isLogin, 'formData:', formData);
     const newErrors = {};
 
     if (!isLogin) {
@@ -87,13 +88,24 @@ const AuthPage = () => {
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const isValid = Object.keys(newErrors).length === 0;
+    console.log('validateForm finished, errors:', newErrors, 'isValid:', isValid);
+    return isValid;
   };
 
   const handleSubmit = async (e) => {
+    console.log('Form submitted!', e);
     e.preventDefault();
-    if (!validateForm()) return;
+    console.log('After preventDefault, formData:', formData);
+    
+    const isValid = validateForm();
+    console.log('Form validation result:', isValid);
+    if (!isValid) {
+      console.log('Form validation failed, errors:', errors);
+      return;
+    }
 
+    console.log('Setting loading state...');
     setIsLoading(true);
     setErrors({});
 
