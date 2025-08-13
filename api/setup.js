@@ -1,3 +1,21 @@
+// Reset admin password endpoint
+router.post('/reset-admin-password', async (req, res) => {
+  try {
+    const bcrypt = require('bcryptjs');
+    const hashedPassword = await bcrypt.hash('admin123', 10);
+    const { data, error } = await supabase
+      .from('Users')
+      .update({ password: hashedPassword })
+      .eq('email', 'admin@college.edu')
+      .select();
+    if (error) {
+      return res.status(500).json({ message: 'Failed to reset password', error: error.message });
+    }
+    res.json({ message: 'Admin password reset to admin123', data });
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
+});
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const { supabase } = require('./lib/supabase');
