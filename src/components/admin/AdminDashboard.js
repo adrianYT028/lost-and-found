@@ -18,7 +18,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
-      navigate('/login');
+      navigate('/auth');
       return;
     }
 
@@ -53,7 +53,7 @@ const AdminDashboard = () => {
       setError('Failed to load dashboard data');
       setLoading(false);
       if (error.message.includes('401') || error.message.includes('Unauthorized')) {
-        navigate('/login');
+        navigate('/auth');
       }
     }
   };

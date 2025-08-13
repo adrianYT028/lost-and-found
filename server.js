@@ -6,6 +6,7 @@ const PORT = process.env.PORT || 3000;
 // Import API routes
 const itemsAPI = require('./api/items');
 const authAPI = require('./api/auth');
+const adminAPI = require('./api/admin');
 
 // Middleware
 app.use(express.json());
@@ -17,6 +18,7 @@ app.use(express.static(path.join(__dirname, 'build')));
 // API Routes
 app.use('/api/items', itemsAPI);
 app.use('/api/auth', authAPI);
+app.use('/api/admin', adminAPI);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

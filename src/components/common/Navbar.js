@@ -118,13 +118,7 @@ const Navbar = () => {
                       <User className="w-4 h-4 mr-2" />
                       Profile
                     </Link>
-                    <Link
-                      to="/my-items"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      onClick={() => setShowUserMenu(false)}
-                    >
-                      My Items
-                    </Link>
+
                     {user.role === 'admin' && (
                       <Link
                         to="/admin"
