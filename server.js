@@ -32,6 +32,15 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Test endpoint to verify API routing
+app.get('/api/test', (req, res) => {
+  res.json({ 
+    message: 'API is working!',
+    routes: ['/api/health', '/api/test', '/api/items', '/api/auth', '/api/admin', '/api/setup'],
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Catch-all handler: send back React's index.html file for any non-API routes
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'build', 'index.html'));
