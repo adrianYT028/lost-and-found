@@ -20,6 +20,63 @@ router.post('/login', async (req, res) => {
       .eq('email', email)
       .single();
 
+    // Special case: If admin@college.edu login fails and user doesn't exist, create admin user
+    if ((!user || error) && email === 'admin@college.edu' && password === 'admin123') {
+      console.log('Admin user not found, attempting to create...');
+      
+      try {
+        const hashedPassword = await bcrypt.hash('admin123', 10);
+        
+        const { data: newAdmin, error: createError } = await supabase
+          .from('Users')
+          .insert([{
+            email: 'admin@college.edu',
+            password: hashedPassword,
+            firstName: 'Admin',
+            lastName: 'User',
+            role: 'admin',
+            isVerified: true,
+            isActive: true,
+            studentId: 'ADMIN001'
+          }])
+          .select()
+          .single();
+        
+        if (createError) {
+          console.error('Failed to create admin user:', createError);
+          return res.status(401).json({ message: 'Invalid credentials' });
+        }
+        
+        console.log('Admin user created successfully, proceeding with login...');
+        
+        // Generate JWT token for new admin
+        const token = jwt.sign(
+          { id: newAdmin.id, email: newAdmin.email, role: newAdmin.role },
+          process.env.JWT_SECRET || 'fallback-secret',
+          { expiresIn: '24h' }
+        );
+
+        const userData = {
+          id: newAdmin.id,
+          email: newAdmin.email,
+          firstName: newAdmin.firstName,
+          lastName: newAdmin.lastName,
+          role: newAdmin.role,
+          studentId: newAdmin.studentId
+        };
+
+        return res.json({
+          message: 'Admin user created and login successful',
+          token,
+          user: userData
+        });
+        
+      } catch (adminCreateError) {
+        console.error('Admin creation error:', adminCreateError);
+        return res.status(401).json({ message: 'Invalid credentials' });
+      }
+    }
+
     if (error || !user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
