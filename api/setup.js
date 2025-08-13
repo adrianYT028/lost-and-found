@@ -6,16 +6,18 @@ router.get('/admin-password-hash', async (req, res) => {
       .select('id, email, password')
       .eq('email', 'admin@college.edu')
       .single();
-    if (error || !admin) {
-      return res.status(404).json({ message: 'Admin user not found', error: error ? error.message : 'Not found' });
+    if (error) {
+      console.error('[ADMIN HASH] DB error:', error);
+      return res.status(200).json({ found: false, error: error.message, admin: null });
     }
-    res.json({
-      id: admin.id,
-      email: admin.email,
-      passwordHash: admin.password
-    });
+    if (!admin) {
+      console.warn('[ADMIN HASH] No admin user found');
+      return res.status(200).json({ found: false, error: 'Not found', admin: null });
+    }
+    res.status(200).json({ found: true, id: admin.id, email: admin.email, passwordHash: admin.password });
   } catch (error) {
-    res.status(500).json({ message: 'Internal server error', error: error.message });
+    console.error('[ADMIN HASH] Exception:', error);
+    res.status(200).json({ found: false, error: error.message, admin: null });
   }
 });
 // GET endpoint to reset admin password for browser access
