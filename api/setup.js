@@ -11,7 +11,115 @@ router.get('/test', (req, res) => {
   });
 });
 
-// GET /api/setup/admin - Create admin user via GET request (for browser access)
+// Database connectivity test
+router.get('/db-test', async (req, res) => {
+  try {
+    console.log('Testing database connectivity...');
+    
+    // Simple test query
+    const { data, error } = await supabase
+      .from('Users')
+      .select('count')
+      .limit(1);
+    
+    if (error) {
+      console.error('Database test error:', error);
+      return res.status(500).json({
+        message: 'Database connection failed',
+        error: error.message,
+        code: error.code
+      });
+    }
+    
+    res.json({
+      message: 'Database connection successful',
+      timestamp: new Date().toISOString(),
+      testResult: 'OK'
+    });
+    
+  } catch (error) {
+    console.error('Database test exception:', error);
+    res.status(500).json({
+      message: 'Database test failed',
+      error: error.message
+    });
+  }
+});
+
+// Quick admin creation endpoint
+router.get('/create-admin', async (req, res) => {
+  try {
+    console.log('Quick admin creation attempt...');
+    
+    // First test basic connectivity
+    const { data: testData, error: testError } = await supabase
+      .from('Users')
+      .select('id')
+      .limit(1);
+    
+    if (testError) {
+      console.error('Database connectivity test failed:', testError);
+      return res.status(500).json({
+        message: 'Database connection failed',
+        error: testError.message
+      });
+    }
+    
+    console.log('Database connectivity OK, creating admin...');
+    
+    // Hash password
+    const hashedPassword = await bcrypt.hash('admin123', 10);
+    
+    // Try to insert admin user
+    const { data: newAdmin, error: insertError } = await supabase
+      .from('Users')
+      .insert([{
+        email: 'admin@college.edu',
+        password: hashedPassword,
+        firstName: 'Admin',
+        lastName: 'User',
+        role: 'admin',
+        isVerified: true,
+        isActive: true,
+        studentId: 'ADMIN001'
+      }])
+      .select()
+      .single();
+    
+    if (insertError) {
+      console.error('Admin creation error:', insertError);
+      if (insertError.code === '23505') { // Unique constraint violation
+        return res.json({
+          message: 'Admin user already exists',
+          exists: true
+        });
+      }
+      return res.status(500).json({
+        message: 'Failed to create admin user',
+        error: insertError.message,
+        code: insertError.code
+      });
+    }
+    
+    console.log('Admin user created successfully');
+    res.json({
+      message: 'Admin user created successfully',
+      created: true,
+      user: {
+        id: newAdmin.id,
+        email: newAdmin.email,
+        role: newAdmin.role
+      }
+    });
+    
+  } catch (error) {
+    console.error('Quick admin creation error:', error);
+    res.status(500).json({
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+});
 router.get('/admin', async (req, res) => {
   try {
     console.log('Setting up admin user via GET...');
