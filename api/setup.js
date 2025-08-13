@@ -1,3 +1,23 @@
+// Debug endpoint to print admin user's hashed password
+router.get('/admin-password-hash', async (req, res) => {
+  try {
+    const { data: admin, error } = await supabase
+      .from('Users')
+      .select('id, email, password')
+      .eq('email', 'admin@college.edu')
+      .single();
+    if (error || !admin) {
+      return res.status(404).json({ message: 'Admin user not found', error: error ? error.message : 'Not found' });
+    }
+    res.json({
+      id: admin.id,
+      email: admin.email,
+      passwordHash: admin.password
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
+});
 // GET endpoint to reset admin password for browser access
 router.get('/reset-admin-password', async (req, res) => {
   try {
