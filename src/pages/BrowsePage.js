@@ -41,31 +41,52 @@ const BrowsePage = () => {
     try {
       setLoading(true);
       setError('');
+      console.log('🔍 BrowsePage: Fetching items...');
+      console.log('🔍 Current environment:', {
+        hostname: window.location.hostname,
+        origin: window.location.origin,
+        userAgent: navigator.userAgent
+      });
+      
       const response = await apiService.items.getAll();
-      console.log('API Response:', response);
+      console.log('🔍 BrowsePage: API Response received:', response);
       
       // Handle different response structures safely
       let itemsArray = [];
       if (Array.isArray(response)) {
         itemsArray = response;
+        console.log('🔍 Response is direct array');
       } else if (response && Array.isArray(response.data)) {
         itemsArray = response.data;
+        console.log('🔍 Response has data array');
       } else if (response && response.data && Array.isArray(response.data.items)) {
         itemsArray = response.data.items;
+        console.log('🔍 Response has nested items array');
       } else {
-        console.warn('Unexpected response structure:', response);
+        console.warn('🔍 Unexpected response structure:', response);
         itemsArray = [];
       }
       
-      console.log('Items array:', itemsArray);
+      console.log('🔍 Final items array:', itemsArray);
+      console.log('🔍 Items count:', itemsArray.length);
       setItems(itemsArray);
       
       // Debug: Log categories in the items
       const categoriesInItems = [...new Set(itemsArray.map(item => item.category).filter(Boolean))];
-      console.log('Categories found in items:', categoriesInItems);
+      console.log('🔍 Categories found in items:', categoriesInItems);
+      
+      // Debug: Log types in the items
+      const typesInItems = [...new Set(itemsArray.map(item => item.type).filter(Boolean))];
+      console.log('🔍 Types found in items:', typesInItems);
+      
     } catch (err) {
-      console.error('Error fetching items:', err);
-      setError('Failed to load items. Please try again.');
+      console.error('🚨 BrowsePage: Error fetching items:', err);
+      console.error('🚨 Error details:', {
+        message: err.message,
+        stack: err.stack,
+        name: err.name
+      });
+      setError(`Failed to load items: ${err.message}`);
       setItems([]);
     } finally {
       setLoading(false);
@@ -279,12 +300,20 @@ const BrowsePage = () => {
             <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-lg max-w-md mx-auto">
               <p className="font-medium">Error Loading Items</p>
               <p className="text-sm mt-1">{error}</p>
-              <button 
-                onClick={fetchItems}
-                className="mt-3 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm transition-colors"
-              >
-                Try Again
-              </button>
+              <div className="mt-3 space-y-2">
+                <button 
+                  onClick={fetchItems}
+                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm transition-colors mr-2"
+                >
+                  Try Again
+                </button>
+                <a 
+                  href="/test-api"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition-colors inline-block"
+                >
+                  Test API Connection
+                </a>
+              </div>
             </div>
           </div>
         )}
@@ -312,7 +341,21 @@ const BrowsePage = () => {
           <div className="text-center py-12">
             <Search className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 mb-2">No items yet</h3>
-            <p className="text-gray-600">Be the first to report a lost or found item!</p>
+            <p className="text-gray-600 mb-4">Be the first to report a lost or found item!</p>
+            <div className="space-y-2">
+              <a 
+                href="/report" 
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg inline-block mr-2"
+              >
+                Report an Item
+              </a>
+              <a 
+                href="/test-api"
+                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm inline-block"
+              >
+                Test API Connection
+              </a>
+            </div>
           </div>
         )}
       </div>
