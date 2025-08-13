@@ -1,33 +1,73 @@
-// API Configuration and Service Layer - MULTI-PLATFORM v8.0 - 2025-08-14
-// Supports Vercel, Azure Static Web Apps, and local development
+// API Configuration and Service Layer - MULTI-PLATFORM v9.0 - 2025-08-14
+// SUPPORTS: VERCEL + AZURE + NETLIFY + HEROKU + LOCAL
 
-const getApiBaseUrl = () => {
+// Platform detection and API URL configuration
+const detectPlatform = () => {
   const hostname = window.location.hostname;
   
-  // Azure Static Web Apps
-  if (hostname.includes('azurestaticapps.net')) {
-    return `https://${hostname}/api`;
+  // Heroku detection
+  if (hostname.includes('herokuapp.com')) {
+    return {
+      name: 'heroku',
+      apiUrl: `${window.location.origin}/api`,
+      isProduction: true
+    };
   }
   
-  // Vercel deployment
+  // Vercel detection
   if (hostname.includes('vercel.app')) {
-    return `https://${hostname}/api`;
+    return {
+      name: 'vercel',
+      apiUrl: `${window.location.origin}/api`,
+      isProduction: true
+    };
   }
   
-  // Git deployment fallback
-  if (hostname.includes('lostandfound-git-master')) {
-    return 'https://lostandfound-zeta.vercel.app/api';
+  // Azure detection
+  if (hostname.includes('azurestaticapps.net') || hostname.includes('azure.com')) {
+    return {
+      name: 'azure',
+      apiUrl: `${window.location.origin}/api`,
+      isProduction: true
+    };
   }
   
-  // Local development - use deployed API for testing
-  return 'https://lostandfound-zeta.vercel.app/api';
+  // Netlify detection
+  if (hostname.includes('netlify.app') || hostname.includes('netlify.com')) {
+    return {
+      name: 'netlify',
+      apiUrl: `${window.location.origin}/.netlify/functions`,
+      isProduction: true
+    };
+  }
+  
+  // GitHub Pages detection
+  if (hostname.includes('github.io')) {
+    return {
+      name: 'github',
+      apiUrl: 'https://your-backend-api.herokuapp.com/api', // Fallback to Heroku API
+      isProduction: true
+    };
+  }
+  
+  // Local development
+  return {
+    name: 'local',
+    apiUrl: 'http://localhost:3001/api',
+    isProduction: false
+  };
 };
 
-const FINAL_API_BASE_URL = getApiBaseUrl();
+const platform = detectPlatform();
+const API_BASE_URL = platform.apiUrl;
 
-console.log('🚀 MULTI-PLATFORM DEPLOYMENT v8.0');
-console.log('🚀 Current hostname:', window.location.hostname);
-console.log('🚀 Final API_BASE_URL:', FINAL_API_BASE_URL);
+console.log('🚀 MULTI-PLATFORM DEPLOYMENT v9.0:', {
+  platform: platform.name,
+  hostname: window.location.hostname,
+  apiUrl: API_BASE_URL,
+  isProduction: platform.isProduction,
+  timestamp: new Date().toISOString()
+});
 
 // API Endpoints
 export const API_ENDPOINTS = {
@@ -87,13 +127,13 @@ const httpMethods = {
 
 // Request helper function
 const makeRequest = async (endpoint, options = {}) => {
-  const url = `${FINAL_API_BASE_URL}${endpoint}`;
-  console.log('🔥 API REQUEST v7.1:', {
+  const url = `${API_BASE_URL}${endpoint}`;
+  console.log('🔥 API REQUEST v9.0:', {
+    platform: platform.name,
     endpoint,
     fullUrl: url,
     method: options.method || 'GET',
     hostname: window.location.hostname,
-    isGitDeployment,
     time: new Date().toISOString()
   });
   
@@ -160,10 +200,11 @@ const makeRequest = async (endpoint, options = {}) => {
       }
 
       // Enhanced error logging for debugging
-      console.error('🚨 API ERROR v7.1:', {
+      console.error('🚨 API ERROR v9.0:', {
+        platform: platform.name,
         status: response.status,
         statusText: response.statusText,
-        url: `${FINAL_API_BASE_URL}${endpoint}`,
+        url: `${API_BASE_URL}${endpoint}`,
         endpoint,
         method: options.method || 'GET',
         errorMessage,
@@ -195,8 +236,9 @@ const makeRequest = async (endpoint, options = {}) => {
       return { data: data };
     }
   } catch (error) {
-    console.error('🚨 API REQUEST FAILED v7.2:', {
-      url: `${FINAL_API_BASE_URL}${endpoint}`,
+    console.error('🚨 API REQUEST FAILED v9.0:', {
+      platform: platform.name,
+      url: `${API_BASE_URL}${endpoint}`,
       endpoint,
       method: options.method || 'GET',
       error: error.message,
