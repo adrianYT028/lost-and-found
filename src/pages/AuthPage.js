@@ -105,19 +105,32 @@ const AuthPage = () => {
           password: formData.password
         });
         
-        // Use context to set user
         console.log('Login response:', response);
-        console.log('Login response data:', response?.data);
         
-        // Check if response has expected structure
-        if (!response || !response.data || !response.data.user || !response.data.token) {
-          throw new Error('Invalid response structure from server');
+        // Handle both direct response and safeApiCall wrapped response
+        let authData;
+        if (response && response.data && response.data.user && response.data.token) {
+          // Direct response structure
+          authData = response.data;
+        } else if (response && response.user && response.token) {
+          // Raw response structure
+          authData = response;
+        } else if (response && response.data && response.data.data) {
+          // Double wrapped response
+          authData = response.data.data;
+        } else {
+          console.error('Unexpected response structure:', response);
+          throw new Error('Invalid response structure from server. Please try again.');
         }
         
-        login(response.data.user, response.data.token);
+        if (!authData.user || !authData.token) {
+          throw new Error('Login failed: Missing user data or token');
+        }
+        
+        login(authData.user, authData.token);
         
         // Redirect admin users to admin dashboard
-        if (response.data.user && response.data.user.role === 'admin') {
+        if (authData.user && authData.user.role === 'admin') {
           console.log('Redirecting admin to admin dashboard');
           navigate('/admin');
         } else {
@@ -131,23 +144,33 @@ const AuthPage = () => {
           lastName: formData.lastName,
           email: formData.email,
           studentId: formData.studentId,
-          course: formData.course,
-          year: formData.year,
           phoneNumber: formData.phoneNumber,
-          password: formData.password,
-          confirmPassword: formData.confirmPassword
+          password: formData.password
         });
         
-        // Use context to set user
         console.log('Register response:', response);
-        console.log('Register response data:', response?.data);
         
-        // Check if response has expected structure
-        if (!response || !response.data || !response.data.user || !response.data.token) {
-          throw new Error('Invalid response structure from server');
+        // Handle both direct response and safeApiCall wrapped response
+        let authData;
+        if (response && response.data && response.data.user && response.data.token) {
+          // Direct response structure
+          authData = response.data;
+        } else if (response && response.user && response.token) {
+          // Raw response structure
+          authData = response;
+        } else if (response && response.data && response.data.data) {
+          // Double wrapped response
+          authData = response.data.data;
+        } else {
+          console.error('Unexpected response structure:', response);
+          throw new Error('Invalid response structure from server. Please try again.');
         }
         
-        login(response.data.user, response.data.token);
+        if (!authData.user || !authData.token) {
+          throw new Error('Registration failed: Missing user data or token');
+        }
+        
+        login(authData.user, authData.token);
         
         // Redirect to dashboard/home
         navigate('/');
