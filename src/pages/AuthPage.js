@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, User, Eye, EyeOff, CheckCircle } from 'lucide-react';
 import { apiService } from '../services/api';
@@ -23,6 +23,36 @@ const AuthPage = () => {
     agreeToTerms: false
   });
   const [errors, setErrors] = useState({});
+
+  // Debug previous login attempts
+  useEffect(() => {
+    console.log('🔍 AuthPage useEffect - checking for previous login attempts...');
+    
+    // Check for previous login attempts
+    const loginSuccess = sessionStorage.getItem('loginSuccess');
+    const loginError = sessionStorage.getItem('loginError');
+    const loginTime = sessionStorage.getItem('loginTime');
+    
+    if (loginSuccess && loginTime) {
+      const timeDiff = Date.now() - parseInt(loginTime);
+      console.log('✅ Previous login success detected:', {
+        loginTime: new Date(parseInt(loginTime)),
+        timeDiff: `${timeDiff}ms ago`
+      });
+      
+      // Clear the success flag
+      sessionStorage.removeItem('loginSuccess');
+      sessionStorage.removeItem('loginTime');
+    }
+    
+    if (loginError) {
+      console.log('❌ Previous login error detected:', loginError);
+      setErrors({ submit: `Previous error: ${loginError}` });
+      sessionStorage.removeItem('loginError');
+    }
+    
+    console.log('🔍 AuthPage useEffect completed');
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -92,49 +122,92 @@ const AuthPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
-
-    setIsLoading(true);
-    setErrors({});
-
+    
+    console.log('🔄 Form submission started');
+    console.log('🔄 Event default prevented');
+    
     try {
+      console.log('🔍 Starting form validation...');
+      if (!validateForm()) {
+        console.log('❌ Form validation failed, stopping submission');
+        return;
+      }
+      
+      console.log('✅ Form validation passed');
+      setIsLoading(true);
+      setErrors({});
+
+      console.log('🌐 About to make API call...');
+      
       if (isLogin) {
-        // Login
+        console.log('🔑 Processing login...');
+        
         const response = await apiService.auth.login({
           email: formData.email,
           password: formData.password
         });
         
-        console.log('Login response:', response);
+        console.log('📡 Login API response received:', response);
         
         // Handle both direct response and safeApiCall wrapped response
         let authData;
         if (response && response.data && response.data.user && response.data.token) {
-          // Direct response structure
+          console.log('✅ Using direct response structure');
           authData = response.data;
         } else if (response && response.user && response.token) {
-          // Raw response structure
+          console.log('✅ Using raw response structure');
           authData = response;
         } else if (response && response.data && response.data.data) {
-          // Double wrapped response
+          console.log('✅ Using double wrapped response structure');
           authData = response.data.data;
         } else {
-          console.error('Unexpected response structure:', response);
+          console.error('❌ Unexpected response structure:', response);
           throw new Error('Invalid response structure from server. Please try again.');
         }
         
         if (!authData.user || !authData.token) {
+          console.error('❌ Missing user data or token in authData:', authData);
           throw new Error('Login failed: Missing user data or token');
         }
         
-        login(authData.user, authData.token);
+        console.log('👤 Auth data validated:', {
+          userId: authData.user?.id,
+          userEmail: authData.user?.email,
+          userRole: authData.user?.role,
+          hasToken: !!authData.token
+        });
         
-        // Redirect admin users to admin dashboard
-        if (authData.user && authData.user.role === 'admin') {
-          console.log('Redirecting admin to admin dashboard');
-          navigate('/admin');
-        } else {
-          navigate('/');
+        console.log('🔐 Calling login context function...');
+        
+        try {
+          await login(authData.user, authData.token);
+          console.log('✅ Login context function completed successfully');
+          
+          // Store success state to prevent page refresh from clearing it
+          sessionStorage.setItem('loginSuccess', 'true');
+          sessionStorage.setItem('loginTime', Date.now().toString());
+          
+          // Add delay to ensure login context is fully processed
+          setTimeout(() => {
+            console.log('🚀 Starting navigation after login...');
+            try {
+              // Redirect admin users to admin dashboard
+              if (authData.user && authData.user.role === 'admin') {
+                console.log('👑 Admin user detected, navigating to admin dashboard');
+                navigate('/admin');
+              } else {
+                console.log('👤 Regular user, navigating to home');
+                navigate('/');
+              }
+            } catch (navError) {
+              console.error('❌ Navigation error:', navError);
+            }
+          }, 100);
+          
+        } catch (loginError) {
+          console.error('❌ Login context function failed:', loginError);
+          sessionStorage.setItem('loginError', loginError.message);
+          throw new Error(`Authentication failed: ${loginError.message}`);
         }
         
       } else {
