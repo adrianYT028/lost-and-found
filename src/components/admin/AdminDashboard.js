@@ -27,32 +27,81 @@ const AdminDashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
+      setLoading(true);
+      setError('');
+      
+      // Try to fetch data with proper error handling
       const promises = [
-        apiService.admin.getDashboardStats(),
-        apiService.admin.getItems(),
-        apiService.admin.getUsers()
+        apiService.admin.getDashboardStats().catch(err => {
+          console.error('Stats fetch failed:', err);
+          return { data: null, error: err.message };
+        }),
+        apiService.admin.getItems().catch(err => {
+          console.error('Items fetch failed:', err);
+          return { data: [], error: err.message };
+        }),
+        apiService.admin.getUsers().catch(err => {
+          console.error('Users fetch failed:', err);
+          return { data: [], error: err.message };
+        })
       ];
-
-      if (activeTab === 'analytics') {
-        promises.push(apiService.admin.getAnalytics());
-      }
 
       const results = await Promise.all(promises);
       
-      setStats(results[0]);
-      setItems(results[1]);
-      setUsers(results[2]);
+      // Handle stats result
+      const statsResult = results[0];
+      if (statsResult && !statsResult.error) {
+        // Handle both wrapped and direct responses
+        const statsData = statsResult.data || statsResult;
+        setStats(statsData || {});
+      } else {
+        console.warn('Failed to fetch stats:', statsResult?.error);
+        setStats({});
+      }
       
-      if (results[3]) {
-        setAnalytics(results[3]);
+      // Handle items result
+      const itemsResult = results[1];
+      if (itemsResult && !itemsResult.error) {
+        const itemsData = itemsResult.data || itemsResult;
+        setItems(Array.isArray(itemsData) ? itemsData : []);
+      } else {
+        console.warn('Failed to fetch items:', itemsResult?.error);
+        setItems([]);
+      }
+      
+      // Handle users result
+      const usersResult = results[2];
+      if (usersResult && !usersResult.error) {
+        const usersData = usersResult.data || usersResult;
+        setUsers(Array.isArray(usersData) ? usersData : []);
+      } else {
+        console.warn('Failed to fetch users:', usersResult?.error);
+        setUsers([]);
+      }
+      
+      // Handle analytics if needed
+      if (activeTab === 'analytics') {
+        try {
+          const analyticsResult = await apiService.admin.getAnalytics();
+          if (analyticsResult && !analyticsResult.error) {
+            const analyticsData = analyticsResult.data || analyticsResult;
+            setAnalytics(analyticsData || {});
+          }
+        } catch (error) {
+          console.warn('Analytics not available:', error);
+          setAnalytics({});
+        }
       }
       
       setLoading(false);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
-      setError('Failed to load dashboard data');
+      setError('Failed to load dashboard data. Please check your admin credentials and try again.');
       setLoading(false);
-      if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+      
+      // Only redirect on authentication errors
+      if (error.message.includes('401') || error.message.includes('Unauthorized') || error.message.includes('auth')) {
+        console.log('Authentication error, redirecting to login...');
         navigate('/auth');
       }
     }

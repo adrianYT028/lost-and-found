@@ -7,6 +7,7 @@ const PORT = process.env.PORT || 3000;
 const itemsAPI = require('./api/items');
 const authAPI = require('./api/auth');
 const adminAPI = require('./api/admin');
+const setupAPI = require('./api/setup');
 
 // Middleware
 app.use(express.json());
@@ -19,6 +20,7 @@ app.use(express.static(path.join(__dirname, 'build')));
 app.use('/api/items', itemsAPI);
 app.use('/api/auth', authAPI);
 app.use('/api/admin', adminAPI);
+app.use('/api/setup', setupAPI);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

@@ -37,10 +37,10 @@ router.get('/', async (req, res) => {
 
     console.log('Admin fetching dashboard stats:', admin.email);
 
-    // Get dashboard statistics
+    // Get basic dashboard statistics
     const [itemsResult, usersResult] = await Promise.all([
       supabase.from('Items').select('id, status, type, createdAt'),
-      supabase.from('Users').select('id, role, isActive, createdAt')
+      supabase.from('Users').select('id, role, createdAt')
     ]);
 
     if (itemsResult.error || usersResult.error) {
@@ -51,34 +51,14 @@ router.get('/', async (req, res) => {
     const items = itemsResult.data || [];
     const users = usersResult.data || [];
 
-    // Calculate statistics
+    // Calculate basic statistics
     const stats = {
       totalItems: items.length,
-      openItems: items.filter(item => item.status === 'open').length,
-      closedItems: items.filter(item => item.status === 'closed').length,
-      claimedItems: items.filter(item => item.status === 'claimed').length,
-      lostItems: items.filter(item => item.type === 'lost').length,
-      foundItems: items.filter(item => item.type === 'found').length,
-      
+      pendingItems: items.filter(item => item.status === 'pending' || item.status === 'open').length,
+      claimedItems: items.filter(item => item.status === 'claimed' || item.status === 'collected').length,
       totalUsers: users.length,
-      activeUsers: users.filter(user => user.isActive).length,
-      adminUsers: users.filter(user => user.role === 'admin').length,
-      studentUsers: users.filter(user => user.role === 'student').length,
-      
-      // Recent activity (last 7 days)
-      recentItems: items.filter(item => {
-        const itemDate = new Date(item.createdAt);
-        const weekAgo = new Date();
-        weekAgo.setDate(weekAgo.getDate() - 7);
-        return itemDate >= weekAgo;
-      }).length,
-      
-      recentUsers: users.filter(user => {
-        const userDate = new Date(user.createdAt);
-        const weekAgo = new Date();
-        weekAgo.setDate(weekAgo.getDate() - 7);
-        return userDate >= weekAgo;
-      }).length
+      lostItems: items.filter(item => item.type === 'lost').length,
+      foundItems: items.filter(item => item.type === 'found').length
     };
 
     console.log('Dashboard stats calculated:', stats);
