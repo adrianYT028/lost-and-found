@@ -1,3 +1,7 @@
+// --- TEST ENDPOINT FOR ROUTING ---
+app.get('/api/routing-test', (req, res) => {
+  res.json({ message: 'API routing is working!' });
+});
 const express = require('express');
 const path = require('path');
 const app = express();
