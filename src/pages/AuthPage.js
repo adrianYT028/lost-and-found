@@ -10,7 +10,7 @@ const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({
+  const initialFormData = {
     firstName: '',
     lastName: '',
     email: '',
@@ -21,7 +21,8 @@ const AuthPage = () => {
     password: '',
     confirmPassword: '',
     agreeToTerms: false
-  });
+  };
+  const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState({});
 
   // Debug previous login attempts
@@ -596,13 +597,7 @@ const AuthPage = () => {
                 type="button"
                 onClick={() => {
                   setIsLogin(!isLogin);
-                  setFormData({
-                    name: '',
-                    email: '',
-                    password: '',
-                    confirmPassword: '',
-                    agreeToTerms: false
-                  });
+                  setFormData(initialFormData);
                   setErrors({});
                 }}
                 className="text-blue-600 hover:text-blue-700 font-medium"
