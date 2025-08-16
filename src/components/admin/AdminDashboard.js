@@ -2,110 +2,70 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiService, getImageUrl } from '../../services/api';
 
-const AdminDashboard = () => {
-  const [stats, setStats] = useState({});
+
+function AdminDashboard() {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [items, setItems] = useState([]);
   const [users, setUsers] = useState([]);
+  const [stats, setStats] = useState({});
   const [analytics, setAnalytics] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [error, setError] = useState('');
   const [selectedItems, setSelectedItems] = useState([]);
   const [showBulkActions, setShowBulkActions] = useState(false);
-  const [editingItem, setEditingItem] = useState(null);
-  const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      navigate('/auth');
-      return;
-    }
-
     fetchDashboardData();
-  }, [navigate]);
+    // eslint-disable-next-line
+  }, [activeTab]);
 
-  const fetchDashboardData = async () => {
+  async function fetchDashboardData() {
+    setLoading(true);
+    setError('');
     try {
-      setLoading(true);
-      setError('');
-      
-      // Try to fetch data with proper error handling
-      const promises = [
-        apiService.admin.getDashboardStats().catch(err => {
-          console.error('Stats fetch failed:', err);
-          return { data: null, error: err.message };
-        }),
-        apiService.admin.getItems().catch(err => {
-          console.error('Items fetch failed:', err);
-          return { data: [], error: err.message };
-        }),
-        apiService.admin.getUsers().catch(err => {
-          console.error('Users fetch failed:', err);
-          return { data: [], error: err.message };
-        })
-      ];
-
-      const results = await Promise.all(promises);
-      
-      // Handle stats result
-      const statsResult = results[0];
-      if (statsResult && !statsResult.error) {
-        // Handle both wrapped and direct responses
-        const statsData = statsResult.data || statsResult;
-        setStats(statsData || {});
-      } else {
-        console.warn('Failed to fetch stats:', statsResult?.error);
-        setStats({});
+      if (activeTab === 'dashboard' || activeTab === 'items') {
+        const itemsResult = await apiService.admin.getItems();
+        if (itemsResult && !itemsResult.error) {
+          setItems(itemsResult.data || itemsResult);
+        } else {
+          setItems([]);
+        }
       }
-      
-      // Handle items result
-      const itemsResult = results[1];
-      if (itemsResult && !itemsResult.error) {
-        const itemsData = itemsResult.data || itemsResult;
-        setItems(Array.isArray(itemsData) ? itemsData : []);
-      } else {
-        console.warn('Failed to fetch items:', itemsResult?.error);
-        setItems([]);
+      if (activeTab === 'dashboard' || activeTab === 'users') {
+        const usersResult = await apiService.admin.getUsers();
+        if (usersResult && !usersResult.error) {
+          setUsers(usersResult.data || usersResult);
+        } else {
+          setUsers([]);
+        }
       }
-      
-      // Handle users result
-      const usersResult = results[2];
-      if (usersResult && !usersResult.error) {
-        const usersData = usersResult.data || usersResult;
-        setUsers(Array.isArray(usersData) ? usersData : []);
-      } else {
-        console.warn('Failed to fetch users:', usersResult?.error);
-        setUsers([]);
+      if (activeTab === 'dashboard') {
+        const statsResult = await apiService.admin.getStats();
+        if (statsResult && !statsResult.error) {
+          setStats(statsResult.data || statsResult);
+        } else {
+          setStats({});
+        }
       }
-      
-      // Handle analytics if needed
       if (activeTab === 'analytics') {
-        try {
-          const analyticsResult = await apiService.admin.getAnalytics();
-          if (analyticsResult && !analyticsResult.error) {
-            const analyticsData = analyticsResult.data || analyticsResult;
-            setAnalytics(analyticsData || {});
-          }
-        } catch (error) {
-          console.warn('Analytics not available:', error);
+        const analyticsResult = await apiService.admin.getAnalytics();
+        if (analyticsResult && !analyticsResult.error) {
+          setAnalytics(analyticsResult.data || analyticsResult);
+        } else {
           setAnalytics({});
         }
       }
-      
-      setLoading(false);
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
       setError('Failed to load dashboard data. Please check your admin credentials and try again.');
-      setLoading(false);
-      
       // Only redirect on authentication errors
-      if (error.message.includes('401') || error.message.includes('Unauthorized') || error.message.includes('auth')) {
-        console.log('Authentication error, redirecting to login...');
+      if (error.message && (error.message.includes('401') || error.message.includes('Unauthorized') || error.message.includes('auth'))) {
         navigate('/auth');
       }
+    } finally {
+      setLoading(false);
     }
-  };
+  }
 
   const updateItemStatus = async (itemId, status, adminNote = '') => {
     try {
