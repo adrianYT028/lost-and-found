@@ -63,7 +63,7 @@ const ProfilePage = () => {
         <p><strong>Last Name:</strong> {profile.lastName}</p>
         <p><strong>Email:</strong> {profile.email}</p>
         <p><strong>Student ID:</strong> {profile.studentId || 'Not provided'}</p>
-        <p><strong>Phone:</strong> {profile.phone || 'Not provided'}</p>
+  <p><strong>Phone:</strong> {profile.phoneNumber || 'Not provided'}</p>
       </div>
     </div>
   );
