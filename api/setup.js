@@ -1,3 +1,7 @@
+// Simple ping endpoint to confirm setup.js is loaded
+router.get('/ping', (req, res) => {
+  res.json({ message: 'Setup API is loaded' });
+});
 // Debug endpoint to print admin user's hashed password
 router.get('/admin-password-hash', async (req, res) => {
   try {
