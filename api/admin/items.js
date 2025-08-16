@@ -3,8 +3,8 @@ const jwt = require('jsonwebtoken');
 const { supabase } = require('../lib/supabase');
 const router = express.Router();
 
-// Helper function to verify JWT token and check admin role
-function verifyAdminToken(req) {
+// Helper function to verify JWT token and check admin role (secure async version)
+async function verifyAdminToken(req) {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return null;
@@ -13,12 +13,15 @@ function verifyAdminToken(req) {
   const token = authHeader.substring(7);
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret');
-    
-    // Check if user has admin role
-    if (decoded.role !== 'admin') {
+    // Check if user is still admin in DB
+    const { data: userData, error } = await supabase
+      .from('Users')
+      .select('role')
+      .eq('id', decoded.id)
+      .single();
+    if (error || !userData || userData.role !== 'admin') {
       return null;
     }
-    
     return decoded;
   } catch (error) {
     console.error('Token verification error:', error);
@@ -30,7 +33,7 @@ function verifyAdminToken(req) {
 router.get('/', async (req, res) => {
   try {
     // Verify admin authentication
-    const admin = verifyAdminToken(req);
+    const admin = await verifyAdminToken(req);
     if (!admin) {
       return res.status(401).json({ message: 'Unauthorized - Admin access required' });
     }
