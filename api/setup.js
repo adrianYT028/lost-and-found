@@ -1,3 +1,5 @@
+const express = require('express');
+const router = express.Router();
 // Simple ping endpoint to confirm setup.js is loaded
 router.get('/ping', (req, res) => {
   res.json({ message: 'Setup API is loaded' });
@@ -63,7 +65,6 @@ router.post('/reset-admin-password', async (req, res) => {
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const { supabase } = require('./lib/supabase');
-const router = express.Router();
 
 // Simple test endpoint
 router.get('/test', (req, res) => {
