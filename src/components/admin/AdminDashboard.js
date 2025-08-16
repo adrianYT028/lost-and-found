@@ -231,6 +231,11 @@ function AdminDashboard() {
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">College Admin Dashboard</h1>
+        <div className="mb-8 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 text-xl font-semibold rounded flex items-center gap-4 animate-pulse">
+          <span className="animate-bounce text-2xl">🚧</span>
+          <span>We are still working on this</span>
+          <span className="animate-bounce text-2xl">🚧</span>
+        </div>
         
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
