@@ -64,7 +64,6 @@ router.post('/reset-admin-password', async (req, res) => {
     res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 });
-
 // Simple test endpoint
 router.get('/test', (req, res) => {
   res.json({ 
@@ -232,6 +231,7 @@ router.get('/admin', async (req, res) => {
         email: newAdmin.email,
         role: newAdmin.role
       }
+
     });
 
   } catch (error) {

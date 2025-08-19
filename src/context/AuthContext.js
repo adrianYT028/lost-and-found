@@ -14,7 +14,14 @@ export const AuthProvider = ({ children }) => {
         try {
           // Get user profile from backend
           const response = await apiService.users.getProfile();
-          setUser(response);
+          // Only set user if response is valid (has id, email, or name)
+          if (response && (response.id || response.email || response.name || response.firstName)) {
+            setUser(response);
+          } else {
+            setUser(null);
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+          }
         } catch (error) {
           console.error("Failed to load user from token", error);
           // If token is invalid, remove it
@@ -22,6 +29,8 @@ export const AuthProvider = ({ children }) => {
           localStorage.removeItem('user');
           setUser(null);
         }
+      } else {
+        setUser(null);
       }
       setLoading(false);
     };
