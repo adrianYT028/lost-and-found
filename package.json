@@ -6,7 +6,7 @@
   "dev": "vercel dev",
   "build": "react-scripts build",
   "start": "node backend/src/server.js",
-  "start:prod": "serve -s build -l 3000",
+  "start:prod": "npx serve -s frontend/build",
   "start:dev": "react-scripts start",
     "test": "react-scripts test",
     "install-frontend": "npm install --prefix frontend",
