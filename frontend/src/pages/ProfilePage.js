@@ -70,16 +70,18 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">My Profile</h1>
-      <div className="bg-white shadow-md rounded-lg p-6">
-        <p><strong>First Name:</strong> {profile.firstName || '-'}</p>
-        <p><strong>Last Name:</strong> {profile.lastName || '-'}</p>
-        <p><strong>Email:</strong> {profile.email || '-'}</p>
-        <p><strong>Student ID:</strong> {profile.studentId || profile.studentID || 'Not provided'}</p>
-        <p><strong>Phone:</strong> {profile.phone || profile.phoneNumber || 'Not provided'}</p>
+    <ErrorBoundary>
+      <div className="container mx-auto p-4">
+        <h1 className="text-2xl font-bold mb-4">My Profile</h1>
+        <div className="bg-white shadow-md rounded-lg p-6">
+          <p><strong>First Name:</strong> {profile.firstName || '-'}</p>
+          <p><strong>Last Name:</strong> {profile.lastName || '-'}</p>
+          <p><strong>Email:</strong> {profile.email || '-'}</p>
+          <p><strong>Student ID:</strong> {profile.studentId || profile.studentID || 'Not provided'}</p>
+          <p><strong>Phone:</strong> {profile.phone || profile.phoneNumber || 'Not provided'}</p>
+        </div>
       </div>
-    </div>
+    </ErrorBoundary>
   );
 };
 
