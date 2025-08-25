@@ -3,6 +3,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { apiService } from '../services/api';
 import { useNavigate } from 'react-router-dom';
+import ErrorBoundary from '../components/common/ErrorBoundary';
 
 
 const ProfilePage = () => {
@@ -19,9 +20,11 @@ const ProfilePage = () => {
         navigate('/auth', { replace: true });
         return;
       }
+      console.log('ProfilePage: current user from context:', user);
       try {
         setLoading(true);
         const response = await apiService.users.getProfile();
+        console.log('ProfilePage: raw profile response:', response);
         // Accept both {success, data} and direct user object
         if (response && (response.success === true || response.success === undefined)) {
           const data = response.data || response;
