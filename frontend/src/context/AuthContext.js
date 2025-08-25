@@ -14,9 +14,14 @@ export const AuthProvider = ({ children }) => {
         try {
           // Get user profile from backend
           const response = await apiService.users.getProfile();
-          // Only set user if response is valid (has id, email, or name)
-          if (response && (response.id || response.email || response.name || response.firstName)) {
-            setUser(response);
+          // apiService may return { success: true, data: { ... } } or the raw user object.
+          const data = response && (response.data || response);
+
+          // Only set user if data looks valid (has id, email or name)
+          if (data && (data.id || data.email || data.name || data.firstName)) {
+            setUser(data);
+            // persist a lightweight user snapshot for quicker reloads
+            try { localStorage.setItem('user', JSON.stringify(data)); } catch (err) { /* ignore */ }
           } else {
             setUser(null);
             localStorage.removeItem('token');
