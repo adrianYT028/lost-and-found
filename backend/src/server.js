@@ -58,6 +58,25 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Prevent API requests from hanging indefinitely — return 504 after timeout
+app.use('/api', (req, res, next) => {
+  // Set request and response timeouts (25s)
+  try {
+    req.setTimeout(25 * 1000);
+  } catch (e) {
+    // ignore if not available
+  }
+
+  res.setTimeout(25 * 1000, () => {
+    console.error(`Request timeout: ${req.method} ${req.originalUrl}`);
+    if (!res.headersSent) {
+      res.status(504).json({ success: false, error: 'Request timed out' });
+    }
+  });
+
+  next();
+});
+
 // Static file serving for uploads
 app.use('/uploads', express.static('uploads'));
 
