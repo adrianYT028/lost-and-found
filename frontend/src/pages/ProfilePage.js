@@ -26,7 +26,13 @@ const ProfilePage = () => {
         if (response && (response.success === true || response.success === undefined)) {
           const data = response.data || response;
           if (data && (data.id || data.email || data.firstName)) {
-            setProfile(data);
+            // Defensive: ensure profile is a plain object before setting
+            if (typeof data === 'object' && data !== null) {
+              setProfile(data);
+            } else {
+              console.error('Invalid profile shape received:', data);
+              setError('Received invalid profile data from server.');
+            }
           } else {
             setError('Profile data is missing or incomplete.');
           }
