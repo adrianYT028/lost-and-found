@@ -19,6 +19,7 @@ const adminRoutes = require('./routes/admin');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
+const path = require('path');
 
 // Security middleware
 app.use(helmet({
@@ -83,6 +84,17 @@ app.use('/api/users', userRoutes);
 app.use('/api/ai-matches', aiMatchRoutes);
 app.use('/api/admin', adminRoutes);
 // app.use('/api/matches', matchRoutes); // Commented out until migrated
+
+// Serve frontend build in production
+if (process.env.NODE_ENV === 'production') {
+  const buildPath = path.join(__dirname, '..', '..', 'frontend', 'build');
+  app.use(express.static(buildPath));
+
+  // Return frontend for any non-API routes
+  app.get(/^(?!\/api).*/, (req, res) => {
+    res.sendFile(path.join(buildPath, 'index.html'));
+  });
+}
 
 // Welcome route
 app.get('/', (req, res) => {
