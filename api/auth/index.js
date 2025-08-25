@@ -1,5 +1,5 @@
 // Auth index route - redirects to login documentation
-export default function handler(req, res) {
+module.exports = function handler(req, res) {
   if (req.method === 'GET') {
     return res.status(200).json({
       message: 'Authentication API',
@@ -9,7 +9,7 @@ export default function handler(req, res) {
       }
     });
   }
-  
+
   // For POST requests to /auth, redirect to login
   if (req.method === 'POST') {
     return res.status(400).json({
@@ -18,6 +18,6 @@ export default function handler(req, res) {
       correctEndpoint: '/auth/login'
     });
   }
-  
+
   return res.status(405).json({ error: 'Method not allowed' });
-}
+};
