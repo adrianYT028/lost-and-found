@@ -135,8 +135,9 @@ const connectDB = async () => {
     }
     
   } catch (error) {
-    console.error('❌ PostgreSQL connection error:', error.message);
-    process.exit(1);
+  console.error('❌ PostgreSQL connection error:', error.message);
+  console.warn('Continuing without database connection. Some API routes may fail until DATABASE_URL is configured.');
+  // Do not exit the process; allow server to start so frontend and non-db routes can be served.
   }
 };
 
