@@ -10,31 +10,43 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const loadUser = async () => {
       const token = localStorage.getItem('token');
+
+      // Use stored snapshot immediately (fast UI) while we verify token in background
+      try {
+        const snap = localStorage.getItem('user');
+        if (snap) {
+          const parsed = JSON.parse(snap);
+          if (parsed && (parsed.id || parsed.email || parsed.firstName || parsed.name)) {
+            setUser(parsed);
+          }
+        }
+      } catch (err) {
+        // ignore parse errors
+      }
+
       if (token) {
         try {
-          // Get user profile from backend
+          // Refresh authoritative profile from backend
           const response = await apiService.users.getProfile();
-          // apiService may return { success: true, data: { ... } } or the raw user object.
           const data = response && (response.data || response);
 
-          // Only set user if data looks valid (has id, email or name)
           if (data && (data.id || data.email || data.name || data.firstName)) {
             setUser(data);
-            // persist a lightweight user snapshot for quicker reloads
             try { localStorage.setItem('user', JSON.stringify(data)); } catch (err) { /* ignore */ }
           } else {
+            // token invalid or response unexpected
             setUser(null);
             localStorage.removeItem('token');
             localStorage.removeItem('user');
           }
         } catch (error) {
           console.error("Failed to load user from token", error);
-          // If token is invalid, remove it
           localStorage.removeItem('token');
           localStorage.removeItem('user');
           setUser(null);
         }
       }
+
       setLoading(false);
     };
     loadUser();
