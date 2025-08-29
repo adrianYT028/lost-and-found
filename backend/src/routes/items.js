@@ -285,7 +285,7 @@ router.post('/', auth, upload.array('images', 5), asyncHandler(async (req, res) 
 
   // Validate required fields
   if (!title || !description || !type || !category || !location || !dateTime) {
-    throw new ValidationError('Please provide all required fields');
+    throw new ValidationError('Required fields are missing: title, description, type, category, location, dateTime');
   }
 
   // Validate type
@@ -299,11 +299,11 @@ router.post('/', auth, upload.array('images', 5), asyncHandler(async (req, res) 
     'documents', 'jewelry', 'sports', 'keys', 'others'
   ];
   if (!validCategories.includes(category.toLowerCase())) {
-    throw new ValidationError('Invalid category');
+    throw new ValidationError(`Invalid category. Valid categories are: ${validCategories.join(', ')}`);
   }
 
   // Validate location
-  if (!location.building) {
+  if (!location || !location.building) {
     throw new ValidationError('Building is required in location');
   }
 

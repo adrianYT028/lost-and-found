@@ -25,9 +25,23 @@ const ReportPage = () => {
   const [submitted, setSubmitted] = useState(false);
 
   const categories = [
-    'Electronics', 'Bags', 'Jewelry', 'Accessories', 'Documents', 
-    'Clothing', 'Books', 'Keys', 'Sports Equipment', 'Other'
+    'Electronics', 'Clothing', 'Accessories', 'Books', 'Bags', 
+    'Documents', 'Jewelry', 'Sports Equipment', 'Keys', 'Other'
   ];
+
+  // Map display categories to backend expected categories
+  const categoryMapping = {
+    'Electronics': 'electronics',
+    'Clothing': 'clothing',
+    'Accessories': 'accessories',
+    'Books': 'books',
+    'Bags': 'bags',
+    'Documents': 'documents',
+    'Jewelry': 'jewelry',
+    'Sports Equipment': 'sports',
+    'Keys': 'keys',
+    'Other': 'others'
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -80,12 +94,12 @@ const ReportPage = () => {
       const itemData = {
         title: formData.title,
         description: formData.description,
-        category: formData.category,
+        category: categoryMapping[formData.category] || formData.category.toLowerCase(),
         location: {
           building: formData.location,
           type: "building"
         },
-        dateTime: formData.date,
+        dateTime: new Date(formData.date).toISOString(),
         type: itemType,
         contactInfo: {
           email: formData.contactEmail,
