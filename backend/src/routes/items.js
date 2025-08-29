@@ -46,6 +46,19 @@ const upload = multer({
   }
 });
 
+// Create upload middleware that handles both files and text fields
+const uploadFields = upload.fields([
+  { name: 'images', maxCount: 5 },
+  { name: 'title', maxCount: 1 },
+  { name: 'description', maxCount: 1 },
+  { name: 'type', maxCount: 1 },
+  { name: 'category', maxCount: 1 },
+  { name: 'location', maxCount: 1 },
+  { name: 'dateTime', maxCount: 1 },
+  { name: 'contactInfo', maxCount: 1 },
+  { name: 'reward', maxCount: 1 }
+]);
+
 // Middleware to get item and attach to request
 const getItem = asyncHandler(async (req, res, next) => {
   const item = await Item.findByPk(req.params.id, {
@@ -245,12 +258,17 @@ router.get('/:id', optionalAuth, getItem, asyncHandler(async (req, res) => {
 // @route   POST /api/items
 // @desc    Create new item
 // @access  Private
-router.post('/', auth, upload.array('images', 5), asyncHandler(async (req, res) => {
+router.post('/', auth, uploadFields, asyncHandler(async (req, res) => {
+  console.log('📝 Raw req.body:', req.body);
+  console.log('📁 Uploaded files:', req.files);
+
   // Parse JSON fields from FormData if they exist
   if (req.body.location && typeof req.body.location === 'string') {
     try {
       req.body.location = JSON.parse(req.body.location);
+      console.log('✅ Parsed location:', req.body.location);
     } catch (e) {
+      console.log('❌ Failed to parse location:', e.message);
       // If parsing fails, treat as string (for backward compatibility)
     }
   }
@@ -258,7 +276,9 @@ router.post('/', auth, upload.array('images', 5), asyncHandler(async (req, res) 
   if (req.body.contactInfo && typeof req.body.contactInfo === 'string') {
     try {
       req.body.contactInfo = JSON.parse(req.body.contactInfo);
+      console.log('✅ Parsed contactInfo:', req.body.contactInfo);
     } catch (e) {
+      console.log('❌ Failed to parse contactInfo:', e.message);
       // If parsing fails, treat as string
     }
   }
@@ -268,23 +288,16 @@ router.post('/', auth, upload.array('images', 5), asyncHandler(async (req, res) 
     description,
     type,
     category,
-    images,
     location,
     dateTime,
-    timeRange,
-    color,
-    brand,
-    model,
-    size,
-    material,
-    serialNumber,
-    uniqueFeatures,
-    contactInfo,
-    isPrivate
+    reward
   } = req.body;
+
+  console.log('📋 Extracted fields:', { title, description, type, category, location, dateTime, reward });
 
   // Validate required fields
   if (!title || !description || !type || !category || !location || !dateTime) {
+    console.log('❌ Missing required fields:', { title: !!title, description: !!description, type: !!type, category: !!category, location: !!location, dateTime: !!dateTime });
     throw new ValidationError('Required fields are missing: title, description, type, category, location, dateTime');
   }
 
@@ -311,7 +324,8 @@ router.post('/', auth, upload.array('images', 5), asyncHandler(async (req, res) 
   const locationString = `${location.building}${location.floor ? `, Floor ${location.floor}` : ''}${location.room ? `, ${location.room}` : ''}`;
 
   // Handle uploaded files
-  const uploadedImages = req.files ? req.files.map(file => file.filename) : [];
+  const uploadedImages = req.files && req.files.images ? req.files.images.map(file => file.filename) : [];
+  console.log('🖼️ Uploaded images:', uploadedImages);
 
   // Create item
   const itemData = {
@@ -323,21 +337,13 @@ router.post('/', auth, upload.array('images', 5), asyncHandler(async (req, res) 
     dateTime: new Date(dateTime),
     status: 'open', // Explicitly set status to open
     userId: req.user.id,
-    color: color?.trim(),
-    brand: brand?.trim(),
-    model: model?.trim(),
-    size: size?.trim(),
-    material: material?.trim(),
-    serialNumber: serialNumber?.trim(),
-    uniqueFeatures: uniqueFeatures || [],
-    contactInfo: contactInfo || {},
-    isPrivate: isPrivate || false,
-    images: uploadedImages
+    contactInfo: req.body.contactInfo || {},
+    isPrivate: false,
+    images: uploadedImages,
+    reward: reward || null
   };
 
-  if (timeRange) {
-    itemData.timeRange = timeRange;
-  }
+  console.log('💾 Creating item with data:', itemData);
 
   const item = await Item.create(itemData);
 
