@@ -26,8 +26,15 @@ const BrowsePage = () => {
       const response = await apiService.items.getAll();
       console.log('API Response:', response);
       
-      // The API returns items directly as an array
-      const itemsArray = Array.isArray(response) ? response : [];
+      // The API returns items in response.data.items
+      let itemsArray = [];
+      if (response && response.data && Array.isArray(response.data.items)) {
+        itemsArray = response.data.items;
+      } else if (Array.isArray(response)) {
+        // Fallback for direct array response
+        itemsArray = response;
+      }
+      
       console.log('Items array:', itemsArray);
       setItems(itemsArray);
       
