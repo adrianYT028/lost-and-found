@@ -11,11 +11,22 @@ const router = express.Router();
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'uploads/');
+    const uploadPath = path.join(__dirname, '../../uploads');
+    
+    // Ensure directory exists
+    if (!require('fs').existsSync(uploadPath)) {
+      require('fs').mkdirSync(uploadPath, { recursive: true });
+      console.log('📁 Created uploads directory during file upload:', uploadPath);
+    }
+    
+    console.log('📤 File upload destination:', uploadPath);
+    cb(null, uploadPath);
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    const filename = file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname);
+    console.log('📝 Generated filename:', filename);
+    cb(null, filename);
   }
 });
 

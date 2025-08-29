@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const app = express();
 // --- TEST ENDPOINT FOR ROUTING ---
 app.get('/api/routing-test', (req, res) => {
@@ -10,6 +11,15 @@ const PORT = process.env.PORT || 3000;
 console.log('🚀 Starting Lost & Found Server...');
 console.log('📂 Current directory:', __dirname);
 console.log('🌐 NODE_ENV:', process.env.NODE_ENV || 'development');
+
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, 'backend', 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+  console.log('📁 Created uploads directory:', uploadsDir);
+} else {
+  console.log('📁 Uploads directory exists:', uploadsDir);
+}
 
 // Import API routes with error handling
 let itemsAPI, authAPI, adminAPI, setupAPI;
@@ -48,6 +58,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // Serve static files from the React app build directory
 app.use(express.static(path.join(__dirname, 'build')));
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'backend', 'uploads')));
 
 // API Routes (with conditional mounting)
 if (itemsAPI) {
