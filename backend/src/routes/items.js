@@ -1,5 +1,4 @@
 const express = require('express');
-const multer = require('multer');
 const path = require('path');
 const { Item, User } = require('../../models');
 const { Op } = require('sequelize');
@@ -8,56 +7,8 @@ const { asyncHandler, ValidationError, NotFoundError, AuthorizationError } = req
 
 const router = express.Router();
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const uploadPath = path.join(__dirname, '../../uploads');
-    
-    // Ensure directory exists
-    if (!require('fs').existsSync(uploadPath)) {
-      require('fs').mkdirSync(uploadPath, { recursive: true });
-      console.log('📁 Created uploads directory during file upload:', uploadPath);
-    }
-    
-    console.log('📤 File upload destination:', uploadPath);
-    cb(null, uploadPath);
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const filename = file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname);
-    console.log('📝 Generated filename:', filename);
-    cb(null, filename);
-  }
-});
-
-const upload = multer({ 
-  storage: storage,
-  limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
-    files: 5 // Max 5 files
-  },
-  fileFilter: function (req, file, cb) {
-    // Accept only image files
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only image files are allowed!'), false);
-    }
-  }
-});
-
-// Create upload middleware that handles both files and text fields
-const uploadFields = upload.fields([
-  { name: 'images', maxCount: 5 },
-  { name: 'title', maxCount: 1 },
-  { name: 'description', maxCount: 1 },
-  { name: 'type', maxCount: 1 },
-  { name: 'category', maxCount: 1 },
-  { name: 'location', maxCount: 1 },
-  { name: 'dateTime', maxCount: 1 },
-  { name: 'contactInfo', maxCount: 1 },
-  { name: 'reward', maxCount: 1 }
-]);
+// Import S3 configuration
+const { uploadFields, getImageUrl, isS3Configured } = require('../config/s3');
 
 // Middleware to get item and attach to request
 const getItem = asyncHandler(async (req, res, next) => {
@@ -221,10 +172,18 @@ router.get('/my', auth, asyncHandler(async (req, res) => {
 
   const totalPages = Math.ceil(count / limitNum);
 
+  // Convert image filenames to full URLs for all items
+  const itemsWithFullUrls = rows.map(item => {
+    if (item.images && item.images.length > 0) {
+      item.images = item.images.map(filename => getImageUrl(filename));
+    }
+    return item;
+  });
+
   res.json({
     success: true,
     data: {
-      items,
+      items: itemsWithFullUrls,
       pagination: {
         currentPage: pageNum,
         totalPages,
@@ -243,14 +202,15 @@ router.get('/my', auth, asyncHandler(async (req, res) => {
 router.get('/:id', optionalAuth, getItem, asyncHandler(async (req, res) => {
   const item = req.resource;
 
-  // Get similar items (implement this logic later if needed)
-  // const similarItems = await Item.findAll({ where: { category: item.category }, limit: 5 });
+  // Convert image filenames to full URLs
+  if (item && item.images && item.images.length > 0) {
+    item.images = item.images.map(filename => getImageUrl(filename));
+  }
 
   res.json({
     success: true,
     data: {
       item
-      // similarItems
     }
   });
 }));
@@ -261,6 +221,7 @@ router.get('/:id', optionalAuth, getItem, asyncHandler(async (req, res) => {
 router.post('/', auth, uploadFields, asyncHandler(async (req, res) => {
   console.log('📝 Raw req.body:', req.body);
   console.log('📁 Uploaded files:', req.files);
+  console.log('☁️ Using S3:', isS3Configured() ? 'Yes' : 'No (using local storage)');
 
   // Parse JSON fields from FormData if they exist
   if (req.body.location && typeof req.body.location === 'string') {
@@ -324,8 +285,20 @@ router.post('/', auth, uploadFields, asyncHandler(async (req, res) => {
   const locationString = `${location.building}${location.floor ? `, Floor ${location.floor}` : ''}${location.room ? `, ${location.room}` : ''}`;
 
   // Handle uploaded files
-  const uploadedImages = req.files && req.files.images ? req.files.images.map(file => file.filename) : [];
-  console.log('🖼️ Uploaded images:', uploadedImages);
+  let uploadedImages = [];
+  if (req.files && req.files.images) {
+    if (isS3Configured()) {
+      // S3: files have 'key' property (filename in S3)
+      uploadedImages = req.files.images.map(file => file.key);
+      console.log('☁️ Uploaded to S3:', uploadedImages);
+    } else {
+      // Local: files have 'filename' property
+      uploadedImages = req.files.images.map(file => file.filename);
+      console.log('💾 Uploaded locally:', uploadedImages);
+    }
+  }
+
+  console.log('🖼️ Final uploaded images:', uploadedImages);
 
   // Create item
   const itemData = {
@@ -356,17 +329,9 @@ router.post('/', auth, uploadFields, asyncHandler(async (req, res) => {
     }]
   });
 
-  // Trigger AI matching in the background (don't wait for it)
-  if (process.env.OPENAI_API_KEY) {
-    setImmediate(async () => {
-      try {
-        const aiMatchingService = require('../services/aiMatchingService');
-        await aiMatchingService.createAutoMatches(item.id);
-        console.log(`AI matching triggered for item ${item.id}`);
-      } catch (error) {
-        console.error(`AI matching failed for item ${item.id}:`, error.message);
-      }
-    });
+  // Convert image filenames to full URLs
+  if (itemWithUser && itemWithUser.images && itemWithUser.images.length > 0) {
+    itemWithUser.images = itemWithUser.images.map(filename => getImageUrl(filename));
   }
 
   res.status(201).json({
