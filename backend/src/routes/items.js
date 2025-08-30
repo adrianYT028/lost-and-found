@@ -219,9 +219,10 @@ router.get('/:id', optionalAuth, getItem, asyncHandler(async (req, res) => {
 // @desc    Create new item
 // @access  Private
 router.post('/', auth, uploadFields, asyncHandler(async (req, res) => {
-  console.log('📝 Raw req.body:', req.body);
-  console.log('📁 Uploaded files:', req.files);
+  console.log('📝 Raw req.body:', JSON.stringify(req.body, null, 2));
+  console.log('📁 Raw req.files:', req.files ? req.files.length : 'No files');
   console.log('☁️ Using S3:', isS3Configured() ? 'Yes' : 'No (using local storage)');
+  console.log('🔍 All request keys:', Object.keys(req.body));
 
   // Parse JSON fields from FormData if they exist
   if (req.body.location && typeof req.body.location === 'string') {
@@ -286,14 +287,14 @@ router.post('/', auth, uploadFields, asyncHandler(async (req, res) => {
 
   // Handle uploaded files
   let uploadedImages = [];
-  if (req.files && req.files.images) {
+  if (req.files && req.files.length > 0) {
     if (isS3Configured()) {
       // S3: files have 'key' property (filename in S3)
-      uploadedImages = req.files.images.map(file => file.key);
+      uploadedImages = req.files.map(file => file.key);
       console.log('☁️ Uploaded to S3:', uploadedImages);
     } else {
       // Local: files have 'filename' property
-      uploadedImages = req.files.images.map(file => file.filename);
+      uploadedImages = req.files.map(file => file.filename);
       console.log('💾 Uploaded locally:', uploadedImages);
     }
   }

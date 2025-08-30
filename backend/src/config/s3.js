@@ -76,18 +76,8 @@ const upload = multer({
   }
 });
 
-// Create upload middleware that handles both files and text fields
-const uploadFields = upload.fields([
-  { name: 'images', maxCount: 5 },
-  { name: 'title', maxCount: 1 },
-  { name: 'description', maxCount: 1 },
-  { name: 'type', maxCount: 1 },
-  { name: 'category', maxCount: 1 },
-  { name: 'location', maxCount: 1 },
-  { name: 'dateTime', maxCount: 1 },
-  { name: 'contactInfo', maxCount: 1 },
-  { name: 'reward', maxCount: 1 }
-]);
+// Create upload middleware that handles only image files
+const uploadFields = upload.array('images', 5);
 
 // Helper function to get full image URL
 const getImageUrl = (filename) => {
